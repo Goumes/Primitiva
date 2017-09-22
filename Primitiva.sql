@@ -4,7 +4,7 @@ GO
 
 CREATE TABLE Sorteos
 (
-	Fecha DATE NOT NULL,
+	Fecha DATETIME NOT NULL,
 	Reintegro TINYINT NOT NULL,
 	Complementario TINYINT NOT NULL,
 	Numero1 TINYINT NOT NULL,
@@ -22,12 +22,12 @@ GO
 CREATE TABLE Boletos
 (
 	ID UNIQUEIDENTIFIER NOT NULL,
-	FechaSorteo DATE NOT NULL,
+	FechaSorteo DATETIME NOT NULL,
 	Reintegro TINYINT NOT NULL,
 
 
 	CONSTRAINT PK_Boletos PRIMARY KEY (ID),
-	CONSTRAINT FK_Boletos_Sorteos FOREIGN KEY (FechaSorteo) REFERENCES Sorteos (Fecha) ON UPDATE CASCADE ON DELETE NO ACTION
+	CONSTRAINT FK_Boletos_Sorteos FOREIGN KEY (FechaSorteo) REFERENCES Sorteos (Fecha) ON UPDATE CASCADE ON DELETE CASCADE
 
 )
 
@@ -55,3 +55,77 @@ CREATE TABLE Numeros
 )
 
 GO
+
+CREATE TRIGGER HoraRestante ON Boletos
+AFTER INSERT AS
+BEGIN
+	DECLARE @FechaAux DATETIME
+	IF EXISTS (SELECT * FROM inserted)
+	BEGIN
+		SELECT @FechaAux = Fecha FROM inserted
+
+		IF ((DATEDIFF (HOUR, @FechaAux, CURRENT_TIMESTAMP) < 1)
+		BEGIN
+			ROLLBACK
+		END
+	END
+END
+
+GO
+
+CREATE TRIGGER NoModificar ON Numeros
+AFTER UPDATE AS
+BEGIN
+	IF EXISTS (SELECT * FROM inserted)
+	BEGIN
+		ROLLBACK
+	END
+END
+
+GO
+
+ALTER TABLE Numeros ADD CONSTRAINT CK_1y49 CHECK (Valor BETWEEN 1 AND 49)
+
+GO
+
+CREATE TRIGGER NoRepetir ON Numeros
+AFTER INSERT AS
+BEGIN
+	DECLARE @IDApuesta UNIQUEIDENTIFIER
+	IF EXISTS (SELECT * FROM inserted)
+	BEGIN
+		SELECT @IDApuesta = IDApuesta FROM inserted
+
+		
+	END
+END
+
+GO
+
+
+CREATE TRIGGER ApuestaSencilla6 ON Numeros
+AFTER INSERT AS
+BEGIN
+	IF EXISTS (SELECT * FROM inserted)
+	BEGIN
+		IF EXISTS (SELECT * 
+					FROM inserted AS I
+					INNER JOIN
+					Apuestas AS A
+					ON I.IDApuesta = A.ID
+					WHERE Tipo = 0) -- Si la apuesta es simple.
+		BEGIN
+
+		IF EXISTS(SELECT COUNT (Valor)
+					FROM Numeros AS N
+					INNER JOIN
+					Apuestas AS A
+					ON N.IDApuestas = A.ID
+					HAVING COUNT (Valor) = 6) --Si la apuesta ya tiene seis números y se inserta otro
+			BEGIN
+				ROLLBACK
+			END
+		END
+	END
+END
+

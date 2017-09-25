@@ -1,4 +1,4 @@
-CREATE DATABASE Primitiva
+USE DATABASE Primitiva
 
 GO
 
@@ -56,15 +56,29 @@ CREATE TABLE Numeros
 
 GO
 
+CREATE TABLE NumerosSorteo
+(
+	Valor TINYINT NOT NULL,
+	FechaSorteo DATETIME NOT NULL,
+
+	CONSTRAINT PK_NumerosSorteo PRIMARY KEY (Valor),
+	CONSTRAINT FK_Numeros_Sorteo FOREIGN KEY (FechaSorteo) REFERENCES Sorteos (Fecha) ON UPDATE CASCADE ON DELETE CASCADE
+)
+
+GO
+
 CREATE TRIGGER HoraRestante ON Boletos
 AFTER INSERT AS
 BEGIN
+
 	DECLARE @FechaAux DATETIME
+
 	IF EXISTS (SELECT * FROM inserted)
 	BEGIN
-		SELECT @FechaAux = Fecha FROM inserted
+		SELECT @FechaAux = FechaSorteo 
+		FROM inserted
 
-		IF ((DATEDIFF (HOUR, @FechaAux, CURRENT_TIMESTAMP) < 1)
+		IF ((DATEDIFF (HOUR, @FechaAux, CURRENT_TIMESTAMP) < 1))
 		BEGIN
 			ROLLBACK
 		END
@@ -120,7 +134,7 @@ BEGIN
 					FROM Numeros AS N
 					INNER JOIN
 					Apuestas AS A
-					ON N.IDApuestas = A.ID
+					ON N.IDApuesta = A.ID
 					HAVING COUNT (Valor) = 6) --Si la apuesta ya tiene seis números y se inserta otro
 			BEGIN
 				ROLLBACK
@@ -129,3 +143,65 @@ BEGIN
 	END
 END
 
+GO
+
+CREATE FUNCTION ComprobarDisponibilidad (@FechaSorteo DATETIME)
+RETURNS BIT AS
+
+	BEGIN
+		DECLARE @Resultado BIT
+		SET @Resultado = 0
+
+		IF EXISTS (SELECT *
+					FROM Sorteos
+					WHERE Fecha = @FechaSorteo AND DATEDIFF (HOUR, @FechaSorteo, CURRENT_TIMESTAMP) > 1)
+
+					BEGIN
+						SET @Resultado = 1
+					END
+
+		RETURN @Resultado
+	END
+
+GO
+
+CREATE FUNCTION GenerarReintegro (@ID UNIQUEIDENTIFIER)
+RETURNS TINYINT AS
+	BEGIN
+		
+	END
+
+GO
+CREATE PROCEDURE GrabaSencilla
+	@FechaSorteo DATETIME,
+	@Num_1 TINYINT, 
+	@Num_2 TINYINT,
+	@Num_3 TINYINT,
+	@Num_4 TINYINT,
+	@Num_5 TINYINT,
+	@Num_6 TINYINT
+AS
+
+	BEGIN
+		IF (SELECT ComprobarDisponibilidad (@FechaSorteo) AS Disponible = 1)
+		BEGIN
+			INSERT INTO Boletos 
+			VALUES
+			()
+		END
+		
+
+
+	END
+
+INSERT INTO Sorteos (Fecha, Reintegro, Complementario)
+VALUES
+()
+
+
+INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
+VALUES 
+(NEWID (), '20120618 10:34:09 AM', 3)
+
+SELECT *
+	FROM Boletos

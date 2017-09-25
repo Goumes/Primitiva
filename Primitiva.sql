@@ -1,4 +1,4 @@
-USE DATABASE Primitiva
+CREATE DATABASE Primitiva
 
 GO
 
@@ -7,12 +7,6 @@ CREATE TABLE Sorteos
 	Fecha DATETIME NOT NULL,
 	Reintegro TINYINT NOT NULL,
 	Complementario TINYINT NOT NULL,
-	Numero1 TINYINT NOT NULL,
-	Numero2 TINYINT NOT NULL,
-	Numero3 TINYINT NOT NULL,
-	Numero4 TINYINT NOT NULL,
-	Numero5 TINYINT NOT NULL,
-	Numero6 TINYINT NOT NULL,
 
 	CONSTRAINT PK_Sorteos PRIMARY KEY (Fecha)
 )
@@ -194,14 +188,34 @@ AS
 
 	END
 
+BEGIN TRANSACTION
+
+INSERT INTO NumerosSorteo (Valor, FechaSorteo)
+VALUES
+(1, '18-06-2012 13:34:09'),
+(3, '18-06-2012 13:34:09'),
+(14, '18-06-2012 13:34:09'),
+(43, '18-06-2012 13:34:09'),
+(12, '18-06-2012 13:34:09'),
+(35, '18-06-2012 13:34:09')
+
+
 INSERT INTO Sorteos (Fecha, Reintegro, Complementario)
 VALUES
-()
+('18-06-2012 13:34:09', 4, 2)
 
 
 INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
 VALUES 
-(NEWID (), '20120618 10:34:09 AM', 3)
+(NEWID (), '18-06-2012 13:34:09', 3)
+
+COMMIT TRANSACTION
 
 SELECT *
-	FROM Boletos
+	FROM Sorteos AS S
+	INNER JOIN
+	Boletos AS B
+	ON S.Fecha = B.FechaSorteo
+	INNER JOIN
+	NumerosSorteo AS NS
+	ON S.Fecha = NS.FechaSorteo

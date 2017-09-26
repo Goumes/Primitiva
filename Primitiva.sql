@@ -1,5 +1,11 @@
 CREATE DATABASE Primitiva
 
+--DROP DATABASE Primitiva
+
+GO
+
+USE Primitiva
+
 GO
 
 CREATE TABLE Sorteos
@@ -17,7 +23,7 @@ CREATE TABLE Boletos
 (
 	ID UNIQUEIDENTIFIER NOT NULL,
 	FechaSorteo DATETIME NOT NULL,
-	Reintegro TINYINT NOT NULL,
+	Reintegro TINYINT NULL,
 
 
 	CONSTRAINT PK_Boletos PRIMARY KEY (ID),
@@ -44,7 +50,7 @@ CREATE TABLE Numeros
 	Valor TINYINT NOT NULL,
 	IDApuesta UNIQUEIDENTIFIER NOT NULL,
 
-	CONSTRAINT PK_Numeros PRIMARY KEY (Valor),
+	CONSTRAINT PK_Numeros PRIMARY KEY (Valor, IDApuesta),
 	CONSTRAINT FK_Numeros_Apuestas FOREIGN KEY (IDApuesta) REFERENCES Apuestas (ID) ON UPDATE CASCADE ON DELETE CASCADE
 )
 
@@ -55,7 +61,7 @@ CREATE TABLE NumerosSorteo
 	Valor TINYINT NOT NULL,
 	FechaSorteo DATETIME NOT NULL,
 
-	CONSTRAINT PK_NumerosSorteo PRIMARY KEY (Valor),
+	CONSTRAINT PK_NumerosSorteo PRIMARY KEY (Valor, FechaSorteo),
 	CONSTRAINT FK_Numeros_Sorteo FOREIGN KEY (FechaSorteo) REFERENCES Sorteos (Fecha) ON UPDATE CASCADE ON DELETE CASCADE,
 	CONSTRAINT CK_1y49Sorteo CHECK (Valor BETWEEN 1 AND 49)
 )
@@ -88,25 +94,6 @@ BEGIN
 	IF EXISTS (SELECT * FROM inserted)
 	BEGIN
 		ROLLBACK
-	END
-END
-
-GO
-
-ALTER TABLE Numeros ADD CONSTRAINT CK_1y49 CHECK (Valor BETWEEN 1 AND 49)
-ALTER TABLE NumerosSorteo ADD CONSTRAINT CK_1y49Sorteo CHECK (Valor BETWEEN 1 AND 49)
-
-GO
-
-CREATE TRIGGER NoRepetir ON Numeros
-AFTER INSERT AS
-BEGIN
-	DECLARE @IDApuesta UNIQUEIDENTIFIER
-	IF EXISTS (SELECT * FROM inserted)
-	BEGIN
-		SELECT @IDApuesta = IDApuesta FROM inserted
-
-		
 	END
 END
 
@@ -150,7 +137,7 @@ RETURNS BIT AS
 
 		IF EXISTS (SELECT *
 					FROM Sorteos
-					WHERE Fecha = @FechaSorteo AND DATEDIFF (HOUR, @FechaSorteo, CURRENT_TIMESTAMP) > 1)
+					WHERE Fecha = @FechaSorteo AND DATEDIFF (MINUTE, @FechaSorteo, CURRENT_TIMESTAMP) > 60)
 
 					BEGIN
 						SET @Resultado = 1
@@ -161,13 +148,22 @@ RETURNS BIT AS
 
 GO
 
-CREATE FUNCTION GenerarReintegro (@ID UNIQUEIDENTIFIER)
-RETURNS TINYINT AS
+CREATE TRIGGER GenerarReintegro ON Boletos
+AFTER INSERT AS
 	BEGIN
-		
+		DECLARE @IDBoleto UNIQUEIDENTIFIER
+
+		SELECT @IDBoleto = ID
+		FROM inserted
+
+		INSERT INTO Boletos (Reintegro)
+		(SELECT (RAND()*(9-1)+1)
+			FROM Boletos
+			WHERE ID = @IDBoleto)
 	END
 
 GO
+
 CREATE PROCEDURE GrabaSencilla
 	@FechaSorteo DATETIME,
 	@Num_1 TINYINT, 
@@ -179,27 +175,10 @@ CREATE PROCEDURE GrabaSencilla
 AS
 
 	BEGIN
-		IF (SELECT ComprobarDisponibilidad (@FechaSorteo) AS Disponible = 1)
-		BEGIN
-			INSERT INTO Boletos 
-			VALUES
-			()
-		END
-		
-
 
 	END
 
 BEGIN TRANSACTION
-
-INSERT INTO NumerosSorteo (Valor, FechaSorteo)
-VALUES
-(50, '18-06-2012 13:34:09'),
-(3, '18-06-2012 13:34:09'),
-(14, '18-06-2012 13:34:09'),
-(43, '18-06-2012 13:34:09'),
-(12, '18-06-2012 13:34:09'),
-(35, '18-06-2012 13:34:09')
 
 
 INSERT INTO Sorteos (Fecha, Reintegro, Complementario)
@@ -207,11 +186,25 @@ VALUES
 ('18-06-2012 13:34:09', 4, 2)
 
 
-INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
+INSERT INTO NumerosSorteo (Valor, FechaSorteo)
+VALUES
+(45, '18-06-2012 13:34:09'),
+(3, '18-06-2012 13:34:09'),
+(14, '18-06-2012 13:34:09'),
+(43, '18-06-2012 13:34:09'),
+(12, '18-06-2012 13:34:09'),
+(35, '18-06-2012 13:34:09')
+
+
+--DECLARE @ID UNIQUEIDENTIFIER = NEWID ()
+
+INSERT INTO Boletos (ID, FechaSorteo)
 VALUES 
-(NEWID (), '18-06-2012 13:34:09', 3)
+(NEWID (), '18-06-2012 13:34:09')
 
 COMMIT TRANSACTION
+
+ROLLBACK
 
 SELECT *
 	FROM Sorteos AS S
@@ -221,3 +214,5 @@ SELECT *
 	INNER JOIN
 	NumerosSorteo AS NS
 	ON S.Fecha = NS.FechaSorteo
+
+	SELECT * FROM Boletos

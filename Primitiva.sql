@@ -213,3 +213,17 @@ SELECT *
 	ON S.Fecha = NS.FechaSorteo
 
 	SELECT * FROM Boletos
+
+GO
+
+CREATE PROCEDURE GrabaMuchasSencillas (@fechaSorteo DATETIME, @numeroBoletos INT)
+AS
+	BEGIN
+		DECLARE @iteraciones INT
+		SET @iteraciones=1
+		WHILE(@numeroBoletos<@iteraciones)
+		BEGIN
+			EXECUTE GrabaSencilla @fechaSorteo, 2,3,1,5,7,34
+			SET @iteraciones=@iteraciones+1
+		END
+	END

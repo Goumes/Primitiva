@@ -1,8 +1,8 @@
 PROCEDIMIENTOS
 
-• NO ESTA HECHO. Implementa un procedimiento almacenado GrabaSencilla que grabe un boleto con una sola apuesta simple. Datos de entrada: El sorteo y los seis números
-• NO SE ENTIENDE QUE ES. Implementa un procedimiento GrabaMuchasSencillas que genere n boletos con una sola apuesta sencilla utilizando el procedimiento GrabaSencilla. Datos de entrada: El sorteo y el valor de n
-• NO ESTA HECHO. Implementa un procedimiento GrabaSencillaAleatoria que genere un boleto con n apuestas sencillas, cuyos números se generarán de forma aleatoria.
+• HECHO NO?. Implementa un procedimiento almacenado GrabaSencilla que grabe un boleto con una sola apuesta simple. Datos de entrada: El sorteo y los seis números
+• HECHO. Implementa un procedimiento GrabaMuchasSencillas que genere n boletos con una sola apuesta sencilla utilizando el procedimiento GrabaSencilla. Datos de entrada: El sorteo y el valor de n
+• FALTA UNA COSA. Implementa un procedimiento GrabaSencillaAleatoria que genere un boleto con n apuestas sencillas, cuyos números se generarán de forma aleatoria.
 • NO ESTA HECHO. Implementa un procedimiento almacenado GrabaMultiple que grabe una apuesta simple. Datos de entrada: El sorteo y entre 5 y 11 números
 
 

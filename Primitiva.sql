@@ -188,7 +188,7 @@ AS
 
 BEGIN TRANSACTION
 
---CREAR TRIGGER PARA REINTEGRO AL GENERAR BOLETO
+--CREAR TRIGGER PARA REINTEGRO AL GENERAR BOLETO -- YA NO
 
 
 INSERT INTO Sorteos (Fecha, Reintegro, Complementario)
@@ -229,14 +229,71 @@ SELECT *
 
 GO
 
+--Debe llamar al metodo de grabaSencillaAleatoria en lugar de al de grabaSencilla
 CREATE PROCEDURE GrabaMuchasSencillas (@fechaSorteo DATETIME, @numeroBoletos INT)
 AS
 	BEGIN
 		DECLARE @iteraciones INT
-		SET @iteraciones=1
+		SET @iteraciones=0
 		WHILE(@numeroBoletos<@iteraciones)
 		BEGIN
-			EXECUTE GrabaSencilla @fechaSorteo, 2,3,1,5,7,34
+			EXECUTE GrabaSencillaAleatoria @fechaSorteo, 1
 			SET @iteraciones=@iteraciones+1
 		END
 	END
+
+GO
+
+--Hay un problema al introducir los numeros aleatorios ya que puede intentar meter uno que ya esta metido
+
+CREATE PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
+AS
+	BEGIN
+		DECLARE @IDBoleto UNIQUEIDENTIFIER
+		SET @IDBoleto = NEWID ()
+
+		DECLARE @IDApuesta UNIQUEIDENTIFIER
+		SET @IDApuesta = NEWID ()
+
+		INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
+		VALUES
+		(@IDBoleto, @FechaSorteo, RAND () * 10)
+
+		DECLARE @iteraciones INT
+		SET @iteraciones=0;
+		WHILE(@numeroApuestas<@iteraciones)
+		BEGIN
+			INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
+			VALUES
+			(@IDApuesta, @IDBoleto, 0) --Apuesta simple
+
+			DECLARE @numeroRandom TINYINT
+			--DECLARE @numeroRandom2 TINYINT
+			DECLARE @num1 TINYINT = RAND () * 49
+			DECLARE @num2 TINYINT
+			DECLARE @num3 TINYINT
+			DECLARE @num4 TINYINT
+			DECLARE @num5 TINYINT
+			DECLARE @num6 TINYINT
+			DECLARE @iteraciones2 TINYINT = 0
+
+			WHILE(@iteraciones2<6)
+			BEGIN
+				SET @numeroRandom = RAND () * 49
+				IF @numeroRandom = @num1
+				BEGIN
+				
+
+			INSERT INTO Numeros (Valor, IDApuesta)
+			VALUES
+			(RAND () * 49, @IDApuesta),
+			(RAND () * 49, @IDApuesta),
+			(RAND () * 49, @IDApuesta),
+			(RAND () * 49, @IDApuesta),
+			(RAND () * 49, @IDApuesta),
+			(RAND () * 49, @IDApuesta)
+
+			SET @iteraciones = @iteraciones+1;
+		END
+	END
+

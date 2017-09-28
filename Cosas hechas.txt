@@ -1,0 +1,18 @@
+PROCEDIMIENTOS
+
+• NO ESTA HECHO. Implementa un procedimiento almacenado GrabaSencilla que grabe un boleto con una sola apuesta simple. Datos de entrada: El sorteo y los seis números
+• NO SE ENTIENDE QUE ES. Implementa un procedimiento GrabaMuchasSencillas que genere n boletos con una sola apuesta sencilla utilizando el procedimiento GrabaSencilla. Datos de entrada: El sorteo y el valor de n
+• NO ESTA HECHO. Implementa un procedimiento GrabaSencillaAleatoria que genere un boleto con n apuestas sencillas, cuyos números se generarán de forma aleatoria.
+• NO ESTA HECHO. Implementa un procedimiento almacenado GrabaMultiple que grabe una apuesta simple. Datos de entrada: El sorteo y entre 5 y 11 números
+
+
+RESTRICCIONES
+
+
+Mediante restricciones check y triggers, asegurate de que se cumplen las siguientes reglas
+• HECHO. No se puede insertar un boleto si queda menos de una hora para el sorteo. Tampoco para sorteos que ya hayan tenido lugar
+• HACIÓ. Una vez insertado un boleto, no se pueden modificar sus números
+• HECHO. Todos los números están comprendido entre 1 y 49
+• HECHO. En las apuestas no se repiten números
+• NOZEZAE. Las apuestas sencillas tienen seis números
+• NO HECHO. Las apuestas múltiples tienen 5, 7, 8, 9, 10 u 11 números

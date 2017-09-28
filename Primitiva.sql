@@ -149,13 +149,6 @@ RETURNS BIT AS
 GO
 
 
---CREATE PROCEDURE GenerarReintegro ()
---RETURNS TINYINT AS
---	BEGIN
---		RETURN (RAND () * 10)
---	END
-GO
-
 CREATE PROCEDURE GrabaSencilla
 	@FechaSorteo DATETIME,
 	@Num_1 TINYINT, 
@@ -165,17 +158,37 @@ CREATE PROCEDURE GrabaSencilla
 	@Num_5 TINYINT,
 	@Num_6 TINYINT
 AS
-
 	BEGIN
-			
+			DECLARE @IDBoleto UNIQUEIDENTIFIER
+			SET @IDBoleto = NEWID ()
+
+			DECLARE @IDApuesta UNIQUEIDENTIFIER
+			SET @IDApuesta = NEWID ()
+
 		BEGIN TRANSACTION
+
 			INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
 			VALUES
-			(NEWID (), @FechaSorteo)
+			(@IDBoleto, @FechaSorteo, RAND () * 10)
+
+			INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
+			VALUES
+			(@IDApuesta, @IDBoleto, 0) --Apuesta simple
+
+			INSERT INTO Numeros (Valor, IDApuesta)
+			VALUES
+			(@Num_1, @IDApuesta),
+			(@Num_2, @IDApuesta),
+			(@Num_3, @IDApuesta),
+			(@Num_4, @IDApuesta),
+			(@Num_5, @IDApuesta),
+			(@Num_6, @IDApuesta)
 		COMMIT TRANSACTION
 	END
 
 BEGIN TRANSACTION
+
+--CREAR TRIGGER PARA REINTEGRO AL GENERAR BOLETO
 
 
 INSERT INTO Sorteos (Fecha, Reintegro, Complementario)

@@ -16,3 +16,18 @@ Mediante restricciones check y triggers, asegurate de que se cumplen las siguien
 • HECHO. En las apuestas no se repiten números
 • NOZEZAE. Las apuestas sencillas tienen seis números
 • NO HECHO. Las apuestas múltiples tienen 5, 7, 8, 9, 10 u 11 números
+
+
+
+RESTRICCION: Las apuestas sencillas tiene que tener seis numeros.
+- Dos tablas, apuesta y numero.
+- La tabla apuesta tiene indicador de simple/multiple
+- Opcion1: crear trigger que se ejecute el último definiendo esta restricción, comprobar la apuesta simple y en caso de que no tenga 6 haga DROP 
+de numeros, apuesta y boleto. (NO VIABLE)
+- Opcion2: (propuesta por Leo) crear un atributo "estado"(binario) de Apuesta que sea en proceso(0) o terminada(1).
+	Opcion2.1: Crear trigger en el procedure de GrabaSencilla, que "salte" cuando intentemos insertar una apuesta con el "estado" terminada(1) (NO VIABLE)
+	Opcion2.2: Meter en TRANSACTION el procedure GrabaSencilla y crear uno que compruebe que tiene 6 numeros, en caso de que los tenga, haga COMMITT TRANSACTION
+	y en caso de que no que haga ROLLBACK TRANSACTION (NO VIABLE, al insertar una apuesta "a mano", sin usar el procedure, se salta esta restriccion)
+- Opcion 3: Insertar los números en la misma transacción, y cuando se cambie el estado de apuesta a completa, se ejecute un trigger que haga inner join 
+	    entre inserted de apuestas y numeros, y cuente los numeros con el ID de la apuesta cambiada. En caso que no tenga 6 numero, dejarla como "en proceso" y
+	    que cada vez que se cree un nuevo sorteo, busque las apuestas anteriores que esten "en proceso" y las elimine (CONSULTAR LEO)

@@ -246,6 +246,8 @@ GO
 
 --Hay un problema al introducir los numeros aleatorios ya que puede intentar meter uno que ya esta metido
 
+
+
 CREATE PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
 AS
 	BEGIN
@@ -267,33 +269,40 @@ AS
 			VALUES
 			(@IDApuesta, @IDBoleto, 0) --Apuesta simple
 
-			DECLARE @numeroRandom TINYINT
-			--DECLARE @numeroRandom2 TINYINT
-			DECLARE @num1 TINYINT = RAND () * 49
-			DECLARE @num2 TINYINT
-			DECLARE @num3 TINYINT
-			DECLARE @num4 TINYINT
-			DECLARE @num5 TINYINT
-			DECLARE @num6 TINYINT
+			DECLARE @tablaNumeros TABLE(
+			Numero TINYINT
+			)
+
 			DECLARE @iteraciones2 TINYINT = 0
 
 			WHILE(@iteraciones2<6)
 			BEGIN
-				SET @numeroRandom = RAND () * 49
-				IF @numeroRandom = @num1
+				DECLARE @numeroRandom TINYINT = RAND () * (49) + 1
+				IF not(@numeroRandom in (SELECT * FROM @tablaNumeros))
 				BEGIN
-				
+					INSERT INTO @tablaNumeros(Numero)
+					VALUES
+					(@numeroRandom)
+					SET @iteraciones2+=1
+				END
+			END
+			--SELECT * FROM @tablaNumeros
 
 			INSERT INTO Numeros (Valor, IDApuesta)
-			VALUES
-			(RAND () * 49, @IDApuesta),
-			(RAND () * 49, @IDApuesta),
-			(RAND () * 49, @IDApuesta),
-			(RAND () * 49, @IDApuesta),
-			(RAND () * 49, @IDApuesta),
-			(RAND () * 49, @IDApuesta)
+			(SELECT Numero, @IDApuesta FROM @tablaNumeros) 
 
 			SET @iteraciones = @iteraciones+1;
 		END
 	END
 
+BEGIN TRANSACTION
+
+INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
+VALUES
+('18-06-2013 13:34:09', 4, 5)
+EXECUTE GrabaSencillaAleatoria '18-06-2013 13:34:09',8
+
+select * from boletos
+select * from Apuestas
+
+rollback

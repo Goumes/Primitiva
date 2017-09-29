@@ -186,6 +186,50 @@ AS
 		COMMIT TRANSACTION
 	END
 
+GO
+
+CREATE PROCEDURE GrabaMultiple
+	@FechaSorteo DATETIME,
+	@Num_1 TINYINT,
+	@Num_2 TINYINT,
+	@Num_3 TINYINT,
+	@Num_4 TINYINT,
+	@Num_5 TINYINT,
+	@Num_6 TINYINT = NULL,
+	@Num_7 TINYINT = NULL,
+	@Num_8 TINYINT = NULL,
+	@Num_9 TINYINT = NULL,
+	@Num_10 TINYINT = NULL,
+	@Num_11 TINYINT = NULL
+AS
+	BEGIN
+		BEGIN TRANSACTION
+		
+		DECLARE @IDBoleto UNIQUEIDENTIFIER = NEWID ()
+		DECLARE @IDApuesta UNIQUEIDENTIFIER = NEWID ()
+
+		INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
+			VALUES
+			(@IDBoleto, @FechaSorteo, RAND () * 10)
+
+		INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
+			VALUES
+			(@IDApuesta, @IDBoleto, 1)
+
+		INSERT INTO Numeros (Valor, IDApuesta)
+			VALUES
+			(@Num_1, @IDApuesta),
+			(@Num_2, @IDApuesta),
+			(@Num_3, @IDApuesta),
+			(@Num_4, @IDApuesta),
+			(@Num_5, @IDApuesta),
+			(@Num_6, @IDApuesta)
+
+		COMMIT TRANSACTION
+	END
+
+GO
+
 BEGIN TRANSACTION
 
 --CREAR TRIGGER PARA REINTEGRO AL GENERAR BOLETO -- YA NO
@@ -235,7 +279,7 @@ AS
 	BEGIN
 		DECLARE @iteraciones INT
 		SET @iteraciones=0
-		WHILE(@numeroBoletos<@iteraciones)
+		WHILE(@numeroBoletos>@iteraciones)
 		BEGIN
 			EXECUTE GrabaSencillaAleatoria @fechaSorteo, 1
 			SET @iteraciones=@iteraciones+1
@@ -261,39 +305,32 @@ AS
 
 		DECLARE @iteraciones INT
 		SET @iteraciones=0;
-		WHILE(@numeroApuestas<@iteraciones)
+		WHILE(@numeroApuestas>@iteraciones)
 		BEGIN
 			INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
 			VALUES
 			(@IDApuesta, @IDBoleto, 0) --Apuesta simple
 
 			DECLARE @numeroRandom TINYINT
-			--DECLARE @numeroRandom2 TINYINT
-			DECLARE @num1 TINYINT = RAND () * 49
+			DECLARE @num1 TINYINT
 			DECLARE @num2 TINYINT
 			DECLARE @num3 TINYINT
 			DECLARE @num4 TINYINT
 			DECLARE @num5 TINYINT
 			DECLARE @num6 TINYINT
-			DECLARE @iteraciones2 TINYINT = 0
+			DECLARE @iteraciones2 TINYINT = 1
 
-			WHILE(@iteraciones2<6)
+			WHILE @iteraciones2 < 6
 			BEGIN
-				SET @numeroRandom = RAND () * 49
-				IF @numeroRandom = @num1
-				BEGIN
-				
 
-			INSERT INTO Numeros (Valor, IDApuesta)
-			VALUES
-			(RAND () * 49, @IDApuesta),
-			(RAND () * 49, @IDApuesta),
-			(RAND () * 49, @IDApuesta),
-			(RAND () * 49, @IDApuesta),
-			(RAND () * 49, @IDApuesta),
-			(RAND () * 49, @IDApuesta)
+			SET @numeroRandom = RAND () * 49
 
-			SET @iteraciones = @iteraciones+1;
+			
+
+			SET @iteraciones2 += 1
+			END
+
+
+
 		END
 	END
-

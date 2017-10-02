@@ -244,18 +244,20 @@ AS
 
 GO
 
---Hay un problema al introducir los numeros aleatorios ya que puede intentar meter uno que ya esta metido
+--De momento genera bien los 6 numeros sin repetirse pero no los introduce bien en la tabla numeros
 
 
-
-CREATE PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
+--!!!!!!!!!!!!!COÑO LA TABLA TEMPORAL DE NUMEROS NO SE BORRA, PRIMERO SE METEN 6, DESPUES 12, 
+--!!!!!!!!!!!!!DESPUES 18 ETCETCETC HAY QUE BORRARLA DESPUES DE CADA INSERT EN APUESTA
+--!!ª!!!!!!ª·ª"qwahser&·w%&j$%"jk&i·%%&j%%tykstjaerjyhkaWKRHASERKETYKEWR
+alter PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
 AS
 	BEGIN
 		DECLARE @IDBoleto UNIQUEIDENTIFIER
 		SET @IDBoleto = NEWID ()
 
 		DECLARE @IDApuesta UNIQUEIDENTIFIER
-		SET @IDApuesta = NEWID ()
+		--SET @IDApuesta = NEWID () -- Usabamos el mismo id de apuesta para todas ellas
 
 		INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
 		VALUES
@@ -263,8 +265,9 @@ AS
 
 		DECLARE @iteraciones INT
 		SET @iteraciones=0;
-		WHILE(@numeroApuestas<@iteraciones)
+		WHILE(@numeroApuestas>@iteraciones)
 		BEGIN
+			SET @IDApuesta = NEWID () -- Generamos un nuevo id de apuesta cada para cada apuesta
 			INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
 			VALUES
 			(@IDApuesta, @IDBoleto, 0) --Apuesta simple
@@ -289,8 +292,9 @@ AS
 			--SELECT * FROM @tablaNumeros
 
 			INSERT INTO Numeros (Valor, IDApuesta)
-			(SELECT Numero, @IDApuesta FROM @tablaNumeros) 
-
+			SELECT Numero,@IDApuesta from @tablaNumeros 
+			--(SELECT Numero, @IDApuesta FROM @tablaNumeros) La variable tabla tablaNumeros no tiene IDApuesta
+			
 			SET @iteraciones = @iteraciones+1;
 		END
 	END
@@ -299,10 +303,14 @@ BEGIN TRANSACTION
 
 INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
-('18-06-2013 13:34:09', 4, 5)
-EXECUTE GrabaSencillaAleatoria '18-06-2013 13:34:09',8
-
+('18-06-2015 13:34:09', 4, 5)
+EXECUTE GrabaSencillaAleatoria '18-06-2015 13:34:09',8
+--DELETE from Sorteos where Fecha='18-06-2015 13:34:09'
+--DELETE from Numeros
+select * from Sorteos
 select * from boletos
 select * from Apuestas
+select * from Numeros
+
 
 rollback

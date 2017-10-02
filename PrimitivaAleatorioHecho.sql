@@ -246,6 +246,7 @@ GO
 
 --De momento genera bien los 6 numeros sin repetirse pero no los introduce bien en la tabla numeros
 
+--LO DE ABAJO ESTA SOLUCIONADO, SE SUPONE QUE EL PROCEDURE YA VA PERFECTO
 
 --!!!!!!!!!!!!!COÑO LA TABLA TEMPORAL DE NUMEROS NO SE BORRA, PRIMERO SE METEN 6, DESPUES 12, 
 --!!!!!!!!!!!!!DESPUES 18 ETCETCETC HAY QUE BORRARLA DESPUES DE CADA INSERT EN APUESTA
@@ -294,7 +295,7 @@ AS
 			INSERT INTO Numeros (Valor, IDApuesta)
 			SELECT Numero,@IDApuesta from @tablaNumeros 
 			--(SELECT Numero, @IDApuesta FROM @tablaNumeros) La variable tabla tablaNumeros no tiene IDApuesta
-			
+			DELETE @tablaNumeros
 			SET @iteraciones = @iteraciones+1;
 		END
 	END

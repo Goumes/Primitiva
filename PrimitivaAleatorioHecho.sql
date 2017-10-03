@@ -187,48 +187,7 @@ AS
 		COMMIT TRANSACTION
 	END
 
-BEGIN TRANSACTION
-
---CREAR TRIGGER PARA REINTEGRO AL GENERAR BOLETO -- YA NO
-
-
-INSERT INTO Sorteos (Fecha, Reintegro, Complementario)
-VALUES
-('18-06-2012 13:34:09', 4, 2)
-
-
-INSERT INTO NumerosSorteo (Valor, FechaSorteo)
-VALUES
-(45, '18-06-2012 13:34:09'),
-(3, '18-06-2012 13:34:09'),
-(14, '18-06-2012 13:34:09'),
-(43, '18-06-2012 13:34:09'),
-(12, '18-06-2012 13:34:09'),
-(35, '18-06-2012 13:34:09')
-
-
---DECLARE @ID UNIQUEIDENTIFIER = NEWID ()
-
-INSERT INTO Boletos (ID, FechaSorteo)
-VALUES 
-(NEWID (), '18-06-2012 13:34:09')
-
-COMMIT TRANSACTION
-
-ROLLBACK
-
-SELECT *
-	FROM Sorteos AS S
-	INNER JOIN
-	Boletos AS B
-	ON S.Fecha = B.FechaSorteo
-	INNER JOIN
-	NumerosSorteo AS NS
-	ON S.Fecha = NS.FechaSorteo
-
-	SELECT * FROM Boletos
-
-	GO
+GO
 
 --De momento genera bien los 6 numeros sin repetirse pero no los introduce bien en la tabla numeros
 
@@ -332,7 +291,14 @@ AS
 			VALUES
 			(@IDApuesta, @IDBoleto, 1)
 		
-		--PROPUESTA1 por JavierGlez revisada y aprobada por Aquarius man, en espera de que el carry Goumes de luz verde
+		--PROPUESTA1 por JavierGlez revisada y aprobada por Aquarius man, en espera de que el carry Goumes de luz verde. 
+		-- .
+		-- .
+		-- .
+		-- .
+		-- .
+		-- .
+		-- El carry Goumes da luz verde, pero con una pequeña modificación.
 		INSERT INTO Numeros (IDApuesta,	Valor)
 			VALUES
 			(@IDApuesta, @Num_1),
@@ -378,11 +344,73 @@ AS
 		END
 		--FIN PROPUESTA1
 
+		-- Ayyyy esas cabezas...
+		UPDATE Apuestas
+		SET Estado = 1
+		WHERE ID = @IDApuesta
+
 		COMMIT TRANSACTION
 	END
 
 GO
 
+-- Empieza la tralla del martes tarde
+-- Si después de modificar una apuesta a estado cerrada no tiene 6 numeros, hacer rollback y dejar el estado a en proceso.
+
+CREATE TRIGGER numeroApuestaSencilla ON Apuestas
+AFTER UPDATE AS
+BEGIN
+	DECLARE @numero int
+
+
+	SELECT @numero = COUNT (N.Valor)
+	FROM inserted as A
+	INNER JOIN
+	Numeros AS N
+	ON A.ID = N.IDApuesta
+
+	IF (@numero = 6)
+	BEGIN
+		UPDATE Apuestas
+		SET Estado = 1
+		WHERE ID = (SELECT ID FROM inserted)
+	END
+
+	ELSE
+	BEGIN
+		ROLLBACK	
+	END
+END
+
+GO
+
+--Lo mismo pero para multiple
+CREATE TRIGGER numeroApuestaMultiple ON Apuestas
+AFTER UPDATE AS
+BEGIN
+	DECLARE @numero int
+
+
+	SELECT @numero = COUNT (N.Valor)
+	FROM inserted as A
+	INNER JOIN
+	Numeros AS N
+	ON A.ID = N.IDApuesta
+
+	IF (@numero > 4 AND @numero != 6 AND @numero < 11)
+	BEGIN
+		UPDATE Apuestas
+		SET Estado = 1
+		WHERE ID = (SELECT ID FROM inserted)
+	END
+
+	ELSE
+	BEGIN
+		ROLLBACK	
+	END
+END
+
+GO
 
 BEGIN TRANSACTION
 
@@ -397,5 +425,51 @@ select * from boletos
 select * from Apuestas
 select * from Numeros
 
+COMMIT TRANSACTION
+
+GO
+
+BEGIN TRANSACTION
+
+--CREAR TRIGGER PARA REINTEGRO AL GENERAR BOLETO -- YA NO
+
+
+INSERT INTO Sorteos (Fecha, Reintegro, Complementario)
+VALUES
+('18-06-2012 13:34:09', 4, 2)
+
+
+INSERT INTO NumerosSorteo (Valor, FechaSorteo)
+VALUES
+(45, '18-06-2012 13:34:09'),
+(3, '18-06-2012 13:34:09'),
+(14, '18-06-2012 13:34:09'),
+(43, '18-06-2012 13:34:09'),
+(12, '18-06-2012 13:34:09'),
+(35, '18-06-2012 13:34:09')
+
+
+--DECLARE @ID UNIQUEIDENTIFIER = NEWID ()
+
+INSERT INTO Boletos (ID, FechaSorteo)
+VALUES 
+(NEWID (), '18-06-2012 13:34:09')
+
+COMMIT TRANSACTION
+
+ROLLBACK
+
+SELECT *
+	FROM Sorteos AS S
+	INNER JOIN
+	Boletos AS B
+	ON S.Fecha = B.FechaSorteo
+	INNER JOIN
+	NumerosSorteo AS NS
+	ON S.Fecha = NS.FechaSorteo
+
+	SELECT * FROM Boletos
+
+	GO
 
 rollback

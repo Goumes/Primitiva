@@ -228,22 +228,7 @@ SELECT *
 
 	SELECT * FROM Boletos
 
-GO
-
---Debe llamar al metodo de grabaSencillaAleatoria en lugar de al de grabaSencilla
-CREATE PROCEDURE GrabaMuchasSencillas (@fechaSorteo DATETIME, @numeroBoletos INT)
-AS
-	BEGIN
-		DECLARE @iteraciones INT
-		SET @iteraciones=0
-		WHILE(@numeroBoletos<@iteraciones)
-		BEGIN
-			EXECUTE GrabaSencillaAleatoria @fechaSorteo, 1
-			SET @iteraciones=@iteraciones+1
-		END
-	END
-
-GO
+	GO
 
 --De momento genera bien los 6 numeros sin repetirse pero no los introduce bien en la tabla numeros
 
@@ -301,6 +286,22 @@ AS
 		END
 	END
 
+
+	GO
+
+
+	CREATE PROCEDURE GrabaMuchasSencillas (@fechaSorteo DATETIME, @numeroBoletos INT)
+	AS
+		BEGIN
+			DECLARE @iteraciones INT
+			SET @iteraciones=0
+			WHILE(@numeroBoletos<@iteraciones)
+			BEGIN
+				EXECUTE GrabaSencillaAleatoria @fechaSorteo, 1
+				SET @iteraciones=@iteraciones+1
+			END
+	END
+
 	GO
 
 	CREATE PROCEDURE GrabaMultiple
@@ -330,6 +331,46 @@ AS
 		INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
 			VALUES
 			(@IDApuesta, @IDBoleto, 1)
+		
+		--PROPUESTA1 por JavierGlez
+		INSERT INTO Numeros (IDApuesta,	Valor)
+			VALUES
+			(@IDApuesta, @Num_1),
+			(@IDApuesta, @Num_2),
+			(@IDApuesta, @Num_3),
+			(@IDApuesta, @Num_4),
+			(@IDApuesta, @Num_5)
+		IF @Num_7!=NULL
+		BEGIN
+			INSERT INTO Numeros (IDApuesta, Valor)
+				VALUES
+				(@IDApuesta, @Num_6)
+		END
+		IF @Num_8!=NULL
+		BEGIN
+			INSERT INTO Numeros (IDApuesta, Valor)
+				VALUES
+				(@IDApuesta, @Num_6)
+		END
+		IF @Num_9!=NULL
+		BEGIN
+			INSERT INTO Numeros (IDApuesta, Valor)
+				VALUES
+				(@IDApuesta, @Num_6)
+		END
+		IF @Num_10!=NULL
+			BEGIN
+				INSERT INTO Numeros (IDApuesta, Valor)
+					VALUES
+					(@IDApuesta, @Num_6)
+			END
+		IF @Num_11!=NULL
+		BEGIN
+			INSERT INTO Numeros (IDApuesta, Valor)
+				VALUES
+				(@IDApuesta, @Num_6)
+		END
+		--FIN PROPUESTA1
 
 		COMMIT TRANSACTION
 	END

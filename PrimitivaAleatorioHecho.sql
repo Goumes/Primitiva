@@ -304,7 +304,7 @@ AS
 
 	GO
 
-	CREATE PROCEDURE GrabaMultiple
+CREATE PROCEDURE GrabaMultiple
 	@FechaSorteo DATETIME,
 	@Num_1 TINYINT,
 	@Num_2 TINYINT,
@@ -332,7 +332,7 @@ AS
 			VALUES
 			(@IDApuesta, @IDBoleto, 1)
 		
-		--PROPUESTA1 por JavierGlez
+		--PROPUESTA1 por JavierGlez revisada y aprobada por Aquarius man, en espera de que el carry Goumes de luz verde
 		INSERT INTO Numeros (IDApuesta,	Valor)
 			VALUES
 			(@IDApuesta, @Num_1),
@@ -340,35 +340,41 @@ AS
 			(@IDApuesta, @Num_3),
 			(@IDApuesta, @Num_4),
 			(@IDApuesta, @Num_5)
-		IF @Num_7!=NULL
+		IF @Num_6!=NULL
 		BEGIN
 			INSERT INTO Numeros (IDApuesta, Valor)
 				VALUES
 				(@IDApuesta, @Num_6)
+		END
+		IF @Num_7!=NULL
+		BEGIN
+			INSERT INTO Numeros (IDApuesta, Valor)
+				VALUES
+				(@IDApuesta, @Num_7)
 		END
 		IF @Num_8!=NULL
 		BEGIN
 			INSERT INTO Numeros (IDApuesta, Valor)
 				VALUES
-				(@IDApuesta, @Num_6)
+				(@IDApuesta, @Num_8)
 		END
 		IF @Num_9!=NULL
 		BEGIN
 			INSERT INTO Numeros (IDApuesta, Valor)
 				VALUES
-				(@IDApuesta, @Num_6)
+				(@IDApuesta, @Num_9)
 		END
 		IF @Num_10!=NULL
-			BEGIN
-				INSERT INTO Numeros (IDApuesta, Valor)
-					VALUES
-					(@IDApuesta, @Num_6)
-			END
+		BEGIN
+			INSERT INTO Numeros (IDApuesta, Valor)
+				VALUES
+				(@IDApuesta, @Num_10)
+		END
 		IF @Num_11!=NULL
 		BEGIN
 			INSERT INTO Numeros (IDApuesta, Valor)
 				VALUES
-				(@IDApuesta, @Num_6)
+				(@IDApuesta, @Num_11)
 		END
 		--FIN PROPUESTA1
 

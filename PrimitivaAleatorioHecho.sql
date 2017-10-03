@@ -251,7 +251,7 @@ GO
 --!!!!!!!!!!!!!COÑO LA TABLA TEMPORAL DE NUMEROS NO SE BORRA, PRIMERO SE METEN 6, DESPUES 12, 
 --!!!!!!!!!!!!!DESPUES 18 ETCETCETC HAY QUE BORRARLA DESPUES DE CADA INSERT EN APUESTA
 --!!ª!!!!!!ª·ª"qwahser&·w%&j$%"jk&i·%%&j%%tykstjaerjyhkaWKRHASERKETYKEWR
-alter PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
+CREATE PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
 AS
 	BEGIN
 		DECLARE @IDBoleto UNIQUEIDENTIFIER
@@ -299,6 +299,40 @@ AS
 			SET @iteraciones = @iteraciones+1;
 		END
 	END
+
+	CREATE PROCEDURE GrabaMultiple
+	@FechaSorteo DATETIME,
+	@Num_1 TINYINT,
+	@Num_2 TINYINT,
+	@Num_3 TINYINT,
+	@Num_4 TINYINT,
+	@Num_5 TINYINT,
+	@Num_6 TINYINT = NULL,
+	@Num_7 TINYINT = NULL,
+	@Num_8 TINYINT = NULL,
+	@Num_9 TINYINT = NULL,
+	@Num_10 TINYINT = NULL,
+	@Num_11 TINYINT = NULL
+AS
+	BEGIN
+		BEGIN TRANSACTION
+		
+		DECLARE @IDBoleto UNIQUEIDENTIFIER = NEWID ()
+		DECLARE @IDApuesta UNIQUEIDENTIFIER = NEWID ()
+
+		INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
+			VALUES
+			(@IDBoleto, @FechaSorteo, RAND () * 10)
+
+		INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
+			VALUES
+			(@IDApuesta, @IDBoleto, 1)
+
+		COMMIT TRANSACTION
+	END
+
+GO
+
 
 BEGIN TRANSACTION
 

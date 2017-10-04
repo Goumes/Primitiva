@@ -166,25 +166,34 @@ AS
 			DECLARE @IDApuesta UNIQUEIDENTIFIER
 			SET @IDApuesta = NEWID ()
 
-		BEGIN TRANSACTION
+			IF ((SELECT dbo.ComprobarDisponibilidad(@FechaSorteo)) = 1)
+			BEGIN
 
-			INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
-			VALUES
-			(@IDBoleto, @FechaSorteo, RAND () * 10)
+				BEGIN TRANSACTION
 
-			INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
-			VALUES
-			(@IDApuesta, @IDBoleto, 0) --Apuesta simple
+					INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
+					VALUES
+					(@IDBoleto, @FechaSorteo, RAND () * 10)
 
-			INSERT INTO Numeros (Valor, IDApuesta)
-			VALUES
-			(@Num_1, @IDApuesta),
-			(@Num_2, @IDApuesta),
-			(@Num_3, @IDApuesta),
-			(@Num_4, @IDApuesta),
-			(@Num_5, @IDApuesta),
-			(@Num_6, @IDApuesta)
-		COMMIT TRANSACTION
+					INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
+					VALUES
+					(@IDApuesta, @IDBoleto, 0) --Apuesta simple
+
+					INSERT INTO Numeros (Valor, IDApuesta)
+					VALUES
+					(@Num_1, @IDApuesta),
+					(@Num_2, @IDApuesta),
+					(@Num_3, @IDApuesta),
+					(@Num_4, @IDApuesta),
+					(@Num_5, @IDApuesta),
+					(@Num_6, @IDApuesta)
+				COMMIT TRANSACTION
+			END
+
+			ELSE
+			BEGIN
+				print 'Aqui se supone que va un raiseerror, pero tengo que mirarlo'
+			END
 	END
 
 GO
@@ -205,44 +214,51 @@ AS
 		DECLARE @IDApuesta UNIQUEIDENTIFIER
 		--SET @IDApuesta = NEWID () -- Usabamos el mismo id de apuesta para todas ellas
 
-		INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
-		VALUES
-		(@IDBoleto, @FechaSorteo, RAND () * 10)
-
-		DECLARE @iteraciones INT
-		SET @iteraciones=0;
-		WHILE(@numeroApuestas>@iteraciones)
-		BEGIN
-			SET @IDApuesta = NEWID () -- Generamos un nuevo id de apuesta cada para cada apuesta
-			INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
-			VALUES
-			(@IDApuesta, @IDBoleto, 0) --Apuesta simple
-
-			DECLARE @tablaNumeros TABLE(
-			Numero TINYINT
-			)
-
-			DECLARE @iteraciones2 TINYINT = 0
-
-			WHILE(@iteraciones2<6)
+		IF ((SELECT dbo.ComprobarDisponibilidad(@fechaSorteo)) = 1)
 			BEGIN
-				DECLARE @numeroRandom TINYINT = RAND () * (49) + 1
-				IF not(@numeroRandom in (SELECT * FROM @tablaNumeros))
+				INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
+				VALUES
+				(@IDBoleto, @FechaSorteo, RAND () * 10)
+
+				DECLARE @iteraciones INT
+				SET @iteraciones=0;
+				WHILE(@numeroApuestas>@iteraciones)
 				BEGIN
-					INSERT INTO @tablaNumeros(Numero)
+					SET @IDApuesta = NEWID () -- Generamos un nuevo id de apuesta cada para cada apuesta
+					INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
 					VALUES
-					(@numeroRandom)
-					SET @iteraciones2+=1
+					(@IDApuesta, @IDBoleto, 0) --Apuesta simple
+
+					DECLARE @tablaNumeros TABLE(
+					Numero TINYINT
+					)
+
+					DECLARE @iteraciones2 TINYINT = 0
+
+					WHILE(@iteraciones2<6)
+					BEGIN
+						DECLARE @numeroRandom TINYINT = RAND () * (49) + 1
+						IF not(@numeroRandom in (SELECT * FROM @tablaNumeros))
+						BEGIN
+							INSERT INTO @tablaNumeros(Numero)
+							VALUES
+							(@numeroRandom)
+							SET @iteraciones2+=1
+						END
+					END
+					--SELECT * FROM @tablaNumeros
+
+					INSERT INTO Numeros (Valor, IDApuesta)
+					SELECT Numero,@IDApuesta from @tablaNumeros 
+					--(SELECT Numero, @IDApuesta FROM @tablaNumeros) La variable tabla tablaNumeros no tiene IDApuesta
+					DELETE @tablaNumeros
+					SET @iteraciones = @iteraciones+1;
 				END
 			END
-			--SELECT * FROM @tablaNumeros
-
-			INSERT INTO Numeros (Valor, IDApuesta)
-			SELECT Numero,@IDApuesta from @tablaNumeros 
-			--(SELECT Numero, @IDApuesta FROM @tablaNumeros) La variable tabla tablaNumeros no tiene IDApuesta
-			DELETE @tablaNumeros
-			SET @iteraciones = @iteraciones+1;
-		END
+			ELSE
+			BEGIN
+				print 'raiseerror'
+			END
 	END
 
 
@@ -283,73 +299,81 @@ AS
 		DECLARE @IDBoleto UNIQUEIDENTIFIER = NEWID ()
 		DECLARE @IDApuesta UNIQUEIDENTIFIER = NEWID ()
 
-		INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
-			VALUES
-			(@IDBoleto, @FechaSorteo, RAND () * 10)
+		IF ((SELECT dbo.ComprobarDisponibilidad(@FechaSorteo)) = 1)
+			BEGIN
 
-		INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
-			VALUES
-			(@IDApuesta, @IDBoleto, 1)
+				INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
+					VALUES
+					(@IDBoleto, @FechaSorteo, RAND () * 10)
+
+				INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
+					VALUES
+					(@IDApuesta, @IDBoleto, 1)
 		
-		--PROPUESTA1 por JavierGlez revisada y aprobada por Aquarius man, en espera de que el carry Goumes de luz verde. 
-		-- .
-		-- .
-		-- .
-		-- .
-		-- .
-		-- .
-		-- El carry Goumes da luz verde, pero con una pequeña modificación.
-		INSERT INTO Numeros (IDApuesta,	Valor)
-			VALUES
-			(@IDApuesta, @Num_1),
-			(@IDApuesta, @Num_2),
-			(@IDApuesta, @Num_3),
-			(@IDApuesta, @Num_4),
-			(@IDApuesta, @Num_5)
-		IF @Num_6!=NULL
-		BEGIN
-			INSERT INTO Numeros (IDApuesta, Valor)
-				VALUES
-				(@IDApuesta, @Num_6)
-		END
-		IF @Num_7!=NULL
-		BEGIN
-			INSERT INTO Numeros (IDApuesta, Valor)
-				VALUES
-				(@IDApuesta, @Num_7)
-		END
-		IF @Num_8!=NULL
-		BEGIN
-			INSERT INTO Numeros (IDApuesta, Valor)
-				VALUES
-				(@IDApuesta, @Num_8)
-		END
-		IF @Num_9!=NULL
-		BEGIN
-			INSERT INTO Numeros (IDApuesta, Valor)
-				VALUES
-				(@IDApuesta, @Num_9)
-		END
-		IF @Num_10!=NULL
-		BEGIN
-			INSERT INTO Numeros (IDApuesta, Valor)
-				VALUES
-				(@IDApuesta, @Num_10)
-		END
-		IF @Num_11!=NULL
-		BEGIN
-			INSERT INTO Numeros (IDApuesta, Valor)
-				VALUES
-				(@IDApuesta, @Num_11)
-		END
-		--FIN PROPUESTA1
+				--PROPUESTA1 por JavierGlez revisada y aprobada por Aquarius man, en espera de que el carry Goumes de luz verde. 
+				-- .
+				-- .
+				-- .
+				-- .
+				-- .
+				-- .
+				-- El carry Goumes da luz verde, pero con una pequeña modificación.
+				INSERT INTO Numeros (IDApuesta,	Valor)
+					VALUES
+					(@IDApuesta, @Num_1),
+					(@IDApuesta, @Num_2),
+					(@IDApuesta, @Num_3),
+					(@IDApuesta, @Num_4),
+					(@IDApuesta, @Num_5)
+				IF @Num_6!=NULL
+				BEGIN
+					INSERT INTO Numeros (IDApuesta, Valor)
+						VALUES
+						(@IDApuesta, @Num_6)
+				END
+				IF @Num_7!=NULL
+				BEGIN
+					INSERT INTO Numeros (IDApuesta, Valor)
+						VALUES
+						(@IDApuesta, @Num_7)
+				END
+				IF @Num_8!=NULL
+				BEGIN
+					INSERT INTO Numeros (IDApuesta, Valor)
+						VALUES
+						(@IDApuesta, @Num_8)
+				END
+				IF @Num_9!=NULL
+				BEGIN
+					INSERT INTO Numeros (IDApuesta, Valor)
+						VALUES
+						(@IDApuesta, @Num_9)
+				END
+				IF @Num_10!=NULL
+				BEGIN
+					INSERT INTO Numeros (IDApuesta, Valor)
+						VALUES
+						(@IDApuesta, @Num_10)
+				END
+				IF @Num_11!=NULL
+				BEGIN
+					INSERT INTO Numeros (IDApuesta, Valor)
+						VALUES
+						(@IDApuesta, @Num_11)
+				END
+				--FIN PROPUESTA1
 
-		-- Ayyyy esas cabezas...
-		UPDATE Apuestas
-		SET Estado = 1
-		WHERE ID = @IDApuesta
+				-- Ayyyy esas cabezas...
+				UPDATE Apuestas
+				SET Estado = 1
+				WHERE ID = @IDApuesta
 
-		COMMIT TRANSACTION
+				COMMIT TRANSACTION
+			END
+		ELSE
+		BEGIN
+			print 'raiseerror'
+		END
 	END
 
 GO
@@ -411,6 +435,24 @@ BEGIN
 END
 
 GO
+
+-- COMIENZO PRUEBAS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 BEGIN TRANSACTION
 

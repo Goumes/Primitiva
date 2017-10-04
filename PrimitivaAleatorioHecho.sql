@@ -445,22 +445,28 @@ END
 GO
 
 -- COMIENZO PRUEBAS
+BEGIN TRANSACTION
 
+INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
+VALUES
+('5-10-2017 13:34:09', 4, 5)
 
+EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 34, 32, 12 ,24
 
+SELECT * 
+FROM Boletos
 
+SELECT *
+FROM Sorteos
 
+SELECT * 
+FROM Apuestas
 
+ROLLBACK
 
+COMMIT TRANSACTION
 
-
-
-
-
-
-
-
-
+ -- FIN PRUEBAS
 
 BEGIN TRANSACTION
 

@@ -368,6 +368,7 @@ BEGIN
 	INNER JOIN
 	Numeros AS N
 	ON A.ID = N.IDApuesta
+	WHERE Tipo = 0
 
 	IF (@numero = 6)
 	BEGIN
@@ -396,8 +397,9 @@ BEGIN
 	INNER JOIN
 	Numeros AS N
 	ON A.ID = N.IDApuesta
+	WHERE Tipo = 1
 
-	IF (@numero > 4 AND @numero != 6 AND @numero < 11)
+	IF (@numero > 4 AND @numero != 6 AND @numero < 12)
 	BEGIN
 		UPDATE Apuestas
 		SET Estado = 1

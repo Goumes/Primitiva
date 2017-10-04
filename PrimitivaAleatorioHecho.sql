@@ -368,19 +368,15 @@ BEGIN
 	INNER JOIN
 	Numeros AS N
 	ON A.ID = N.IDApuesta
-	WHERE Tipo = 0
 
-	IF (@numero = 6)
+	IF (@numero != 6)
 	BEGIN
-		UPDATE Apuestas
-		SET Estado = 1
-		WHERE ID = (SELECT ID FROM inserted)
+		ROLLBACK
+		/*UPDATE Apuestas
+		SET Estado = 0
+		WHERE ID = (SELECT ID FROM inserted)*/
 	END
 
-	ELSE
-	BEGIN
-		ROLLBACK	
-	END
 END
 
 GO
@@ -397,19 +393,19 @@ BEGIN
 	INNER JOIN
 	Numeros AS N
 	ON A.ID = N.IDApuesta
-	WHERE Tipo = 1
 
-	IF (@numero > 4 AND @numero != 6 AND @numero < 12)
+	IF (@numero < 5 OR @numero = 6 OR @numero > 11)
 	BEGIN
-		UPDATE Apuestas
-		SET Estado = 1
-		WHERE ID = (SELECT ID FROM inserted)
+		ROLLBACK
+		/*UPDATE Apuestas
+		SET Estado = 0
+		WHERE ID = (SELECT ID FROM inserted)*/
 	END
 
-	ELSE
+	/*ELSE
 	BEGIN
 		ROLLBACK	
-	END
+	END*/   -- Invertimos el IF
 END
 
 GO

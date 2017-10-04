@@ -51,6 +51,7 @@ CREATE TABLE Numeros
 	Valor TINYINT NOT NULL,
 	IDApuesta UNIQUEIDENTIFIER NOT NULL,
 
+	CONSTRAINT CK_1y49Numeros CHECK (Valor BETWEEN 1 AND 49),
 	CONSTRAINT PK_Numeros PRIMARY KEY (Valor, IDApuesta),
 	CONSTRAINT FK_Numeros_Apuestas FOREIGN KEY (IDApuesta) REFERENCES Apuestas (ID) ON UPDATE CASCADE ON DELETE CASCADE
 )
@@ -80,7 +81,7 @@ BEGIN
 		SELECT @FechaAux = FechaSorteo 
 		FROM inserted
 
-		IF ((DATEDIFF (HOUR, @FechaAux, CURRENT_TIMESTAMP) < 1))
+		IF ((DATEDIFF (MINUTE, @FechaAux, CURRENT_TIMESTAMP) > 60))
 		BEGIN
 			ROLLBACK
 		END
@@ -88,6 +89,7 @@ BEGIN
 END
 
 GO
+
 
 CREATE TRIGGER NoModificar ON Numeros
 AFTER UPDATE AS
@@ -100,36 +102,7 @@ END
 
 GO
 
-
-CREATE TRIGGER ApuestaSencilla6 ON Numeros
-AFTER INSERT AS
-BEGIN
-	IF EXISTS (SELECT * FROM inserted)
-	BEGIN
-		IF EXISTS (SELECT * 
-					FROM inserted AS I
-					INNER JOIN
-					Apuestas AS A
-					ON I.IDApuesta = A.ID
-					WHERE Tipo = 0) -- Si la apuesta es simple.
-		BEGIN
-
-		IF EXISTS(SELECT COUNT (Valor)
-					FROM Numeros AS N
-					INNER JOIN
-					Apuestas AS A
-					ON N.IDApuesta = A.ID
-					HAVING COUNT (Valor) = 6) --Si la apuesta ya tiene seis números y se inserta otro
-			BEGIN
-				ROLLBACK
-			END
-		END
-	END
-END
-
-GO
-
-CREATE FUNCTION ComprobarDisponibilidad (@FechaSorteo DATETIME)
+ALTER FUNCTION ComprobarDisponibilidad (@FechaSorteo DATETIME)
 RETURNS BIT AS
 
 	BEGIN
@@ -138,7 +111,7 @@ RETURNS BIT AS
 
 		IF EXISTS (SELECT *
 					FROM Sorteos
-					WHERE Fecha = @FechaSorteo AND DATEDIFF (MINUTE, @FechaSorteo, CURRENT_TIMESTAMP) > 60)
+					WHERE Fecha = @FechaSorteo) --AND DATEDIFF (MINUTE, @FechaSorteo, CURRENT_TIMESTAMP) > 60)
 
 					BEGIN
 						SET @Resultado = 1
@@ -394,20 +367,22 @@ AFTER UPDATE AS
 BEGIN
 	DECLARE @numero int
 
-
-	SELECT @numero = COUNT (N.Valor)
-	FROM inserted as A
-	INNER JOIN
-	Numeros AS N
-	ON A.ID = N.IDApuesta
-	WHERE Tipo = 0
-
-	IF (@numero != 6)
+	IF EXISTS(SELECT * FROM inserted WHERE Tipo = 0)
 	BEGIN
-		ROLLBACK
-		/*UPDATE Apuestas
-		SET Estado = 0
-		WHERE ID = (SELECT ID FROM inserted)*/
+		SELECT @numero = COUNT (N.Valor)
+		FROM inserted as A
+		INNER JOIN
+		Numeros AS N
+		ON A.ID = N.IDApuesta
+		WHERE Tipo = 0
+
+		IF (@numero != 6)
+		BEGIN
+			ROLLBACK
+			/*UPDATE Apuestas
+			SET Estado = 0
+			WHERE ID = (SELECT ID FROM inserted)*/
+		END
 	END
 
 END
@@ -420,20 +395,22 @@ AFTER UPDATE AS
 BEGIN
 	DECLARE @numero int
 
-
-	SELECT @numero = COUNT (N.Valor)
-	FROM inserted as A
-	INNER JOIN
-	Numeros AS N
-	ON A.ID = N.IDApuesta
-	WHERE Tipo = 1
-
-	IF (@numero < 5 OR @numero = 6 OR @numero > 11)
+	IF EXISTS(SELECT * FROM inserted WHERE Tipo = 1)
 	BEGIN
-		ROLLBACK
-		/*UPDATE Apuestas
-		SET Estado = 0
-		WHERE ID = (SELECT ID FROM inserted)*/
+		SELECT @numero = COUNT (N.Valor)
+		FROM inserted as A
+		INNER JOIN
+		Numeros AS N
+		ON A.ID = N.IDApuesta
+		WHERE Tipo = 1
+
+		IF (@numero < 5 OR @numero = 6 OR @numero > 11)
+		BEGIN
+			ROLLBACK
+			/*UPDATE Apuestas
+			SET Estado = 0
+			WHERE ID = (SELECT ID FROM inserted)*/
+		END
 	END
 
 	/*ELSE
@@ -451,7 +428,13 @@ INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
 ('5-10-2017 13:34:09', 4, 5)
 
-EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 34, 32, 12 ,24
+EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 34, 32, 12 ,24 --Probando numeros válidos. Funciona flama
+
+EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 34, 34, 12 ,24 --Probando numeros repetidos. Funciona flama
+
+EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 0, 32, 12 ,24 -- Probando numeros no admitidos
+
+EXECUTE GrabaSencilla '5-12-2017 13:34:09', 1, 5, 0, 32, 12 ,24 -- Probando Sorteo erroneo
 
 SELECT * 
 FROM Boletos
@@ -461,6 +444,9 @@ FROM Sorteos
 
 SELECT * 
 FROM Apuestas
+
+SELECT *
+FROM Numeros
 
 ROLLBACK
 

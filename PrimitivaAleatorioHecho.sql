@@ -187,6 +187,10 @@ AS
 					(@Num_4, @IDApuesta),
 					(@Num_5, @IDApuesta),
 					(@Num_6, @IDApuesta)
+
+					UPDATE Apuestas
+					SET Estado = 1
+					WHERE ID = @IDApuesta
 				COMMIT TRANSACTION
 			END
 
@@ -253,6 +257,10 @@ AS
 					--(SELECT Numero, @IDApuesta FROM @tablaNumeros) La variable tabla tablaNumeros no tiene IDApuesta
 					DELETE @tablaNumeros
 					SET @iteraciones = @iteraciones+1;
+
+					UPDATE Apuestas
+					SET Estado = 1
+					WHERE ID = @IDApuesta
 				END
 			END
 			ELSE

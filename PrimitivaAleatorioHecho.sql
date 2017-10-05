@@ -81,7 +81,7 @@ BEGIN
 		SELECT @FechaAux = FechaSorteo 
 		FROM inserted
 
-		IF ((DATEDIFF (MINUTE, @FechaAux, CURRENT_TIMESTAMP) > 60) AND CURRENT_TIMESTAMP < @FechaAux)
+		IF (CURRENT_TIMESTAMP > @FechaAux OR (DATEDIFF (MINUTE, CURRENT_TIMESTAMP, @FechaAux) <= 60))
 		BEGIN
 			ROLLBACK
 		END
@@ -102,7 +102,8 @@ END
 
 GO
 
-ALTER FUNCTION ComprobarDisponibilidad (@FechaSorteo DATETIME)
+/*
+CREATE FUNCTION ComprobarDisponibilidad (@FechaSorteo DATETIME)
 RETURNS BIT AS
 
 	BEGIN
@@ -121,7 +122,7 @@ RETURNS BIT AS
 	END
 
 GO
-
+*/
 
 CREATE PROCEDURE GrabaSencilla
 	@FechaSorteo DATETIME,
@@ -138,9 +139,6 @@ AS
 
 			DECLARE @IDApuesta UNIQUEIDENTIFIER
 			SET @IDApuesta = NEWID ()
-
-			IF ((SELECT dbo.ComprobarDisponibilidad(@FechaSorteo)) = 1)
-			BEGIN
 
 				BEGIN TRANSACTION
 
@@ -165,12 +163,6 @@ AS
 					SET Estado = 1
 					WHERE ID = @IDApuesta
 				COMMIT TRANSACTION
-			END
-
-			ELSE
-			BEGIN
-				print 'Aqui se supone que va un raiseerror, pero tengo que mirarlo'
-			END
 	END
 
 GO
@@ -190,73 +182,72 @@ AS
 
 		DECLARE @IDApuesta UNIQUEIDENTIFIER
 		--SET @IDApuesta = NEWID () -- Usabamos el mismo id de apuesta para todas ellas
+		IF (@numeroApuestas < 9 AND @numeroApuestas > 0)
+		BEGIN
+			INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
+			VALUES
+			(@IDBoleto, @FechaSorteo, RAND () * 10)
 
-		IF ((SELECT dbo.ComprobarDisponibilidad(@fechaSorteo)) = 1)
+			DECLARE @iteraciones INT
+			SET @iteraciones=0;
+			WHILE(@numeroApuestas>@iteraciones)
 			BEGIN
-				INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
+				SET @IDApuesta = NEWID () -- Generamos un nuevo id de apuesta cada para cada apuesta
+				INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
 				VALUES
-				(@IDBoleto, @FechaSorteo, RAND () * 10)
+				(@IDApuesta, @IDBoleto, 0) --Apuesta simple
 
-				DECLARE @iteraciones INT
-				SET @iteraciones=0;
-				WHILE(@numeroApuestas>@iteraciones)
+				DECLARE @tablaNumeros TABLE(
+				Numero TINYINT
+				)
+
+				DECLARE @iteraciones2 TINYINT = 0
+
+				WHILE(@iteraciones2<6)
 				BEGIN
-					SET @IDApuesta = NEWID () -- Generamos un nuevo id de apuesta cada para cada apuesta
-					INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
-					VALUES
-					(@IDApuesta, @IDBoleto, 0) --Apuesta simple
-
-					DECLARE @tablaNumeros TABLE(
-					Numero TINYINT
-					)
-
-					DECLARE @iteraciones2 TINYINT = 0
-
-					WHILE(@iteraciones2<6)
+					DECLARE @numeroRandom TINYINT = RAND () * (49) + 1
+					IF not(@numeroRandom in (SELECT * FROM @tablaNumeros))
 					BEGIN
-						DECLARE @numeroRandom TINYINT = RAND () * (49) + 1
-						IF not(@numeroRandom in (SELECT * FROM @tablaNumeros))
-						BEGIN
-							INSERT INTO @tablaNumeros(Numero)
-							VALUES
-							(@numeroRandom)
-							SET @iteraciones2+=1
-						END
+						INSERT INTO @tablaNumeros(Numero)
+						VALUES
+						(@numeroRandom)
+						SET @iteraciones2+=1
 					END
-					--SELECT * FROM @tablaNumeros
-
-					INSERT INTO Numeros (Valor, IDApuesta)
-					SELECT Numero,@IDApuesta from @tablaNumeros 
-					--(SELECT Numero, @IDApuesta FROM @tablaNumeros) La variable tabla tablaNumeros no tiene IDApuesta
-					DELETE @tablaNumeros
-					SET @iteraciones = @iteraciones+1;
-
-					UPDATE Apuestas
-					SET Estado = 1
-					WHERE ID = @IDApuesta
 				END
+				--SELECT * FROM @tablaNumeros
+
+				INSERT INTO Numeros (Valor, IDApuesta)
+				SELECT Numero,@IDApuesta from @tablaNumeros 
+				--(SELECT Numero, @IDApuesta FROM @tablaNumeros) La variable tabla tablaNumeros no tiene IDApuesta
+				DELETE @tablaNumeros
+				SET @iteraciones = @iteraciones+1;
+
+				UPDATE Apuestas
+				SET Estado = 1
+				WHERE ID = @IDApuesta
 			END
-			ELSE
-			BEGIN
-				print 'raiseerror'
-			END
+		END
+		ELSE
+		BEGIN
+			Print 'NEIN'
+		END
 	END
 
 
 	GO
 
 
-	CREATE PROCEDURE GrabaMuchasSencillas (@fechaSorteo DATETIME, @numeroBoletos INT)
-	AS
+CREATE PROCEDURE GrabaMuchasSencillas (@fechaSorteo DATETIME, @numeroBoletos INT)
+AS
+	BEGIN
+		DECLARE @iteraciones INT
+		SET @iteraciones=0
+		WHILE(@numeroBoletos>@iteraciones)
 		BEGIN
-			DECLARE @iteraciones INT
-			SET @iteraciones=0
-			WHILE(@numeroBoletos<@iteraciones)
-			BEGIN
-				EXECUTE GrabaSencillaAleatoria @fechaSorteo, 1
-				SET @iteraciones=@iteraciones+1
-			END
-	END
+			EXECUTE GrabaSencillaAleatoria @fechaSorteo, 1
+			SET @iteraciones=@iteraciones+1
+		END
+END
 
 	GO
 
@@ -280,9 +271,6 @@ AS
 		DECLARE @IDBoleto UNIQUEIDENTIFIER = NEWID ()
 		DECLARE @IDApuesta UNIQUEIDENTIFIER = NEWID ()
 
-		IF ((SELECT dbo.ComprobarDisponibilidad(@FechaSorteo)) = 1)
-			BEGIN
-
 				INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
 					VALUES
 					(@IDBoleto, @FechaSorteo, RAND () * 10)
@@ -299,6 +287,7 @@ AS
 				-- .
 				-- .
 				-- El carry Goumes da luz verde, pero con una pequeña modificación.
+				-- Fran jugó lee sin support.
 				INSERT INTO Numeros (IDApuesta,	Valor)
 					VALUES
 					(@IDApuesta, @Num_1),
@@ -351,11 +340,6 @@ AS
 
 				COMMIT TRANSACTION
 			END
-		ELSE
-		BEGIN
-			print 'raiseerror'
-		END
-	END
 
 GO
 
@@ -421,12 +405,29 @@ END
 
 GO
 
+CREATE TRIGGER NumeroApuestasPorBoleto ON Apuestas
+AFTER INSERT AS
+BEGIN
+	DECLARE @IDBoleto UNIQUEIDENTIFIER
+	SELECT @IDBoleto = ID_Boleto FROM inserted
+
+	IF ((SELECT COUNT (ID)
+			FROM Apuestas
+			WHERE ID_Boleto = @IDBoleto AND Tipo = 1) > 1)
+			BEGIN
+				ROLLBACK
+			END
+
+END
+
+GO
+
 -- COMIENZO PRUEBAS
 BEGIN TRANSACTION
 
 INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
-('5-10-2017 13:34:09', 4, 5)
+('5-10-2017 15:34:09', 4, 5)
 
 EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 34, 32, 12 ,24 --Probando numeros válidos. Funciona flama
 
@@ -435,6 +436,16 @@ EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 34, 34, 12 ,24 --Probando nume
 EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 0, 32, 12 ,24 -- Probando numeros no admitidos
 
 EXECUTE GrabaSencilla '5-12-2017 13:34:09', 1, 5, 0, 32, 12 ,24 -- Probando Sorteo erroneo
+
+EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 5 --Probando caso correcto
+
+EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 9 --Probando caso incorrecto
+
+EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 0 --Probando caso incorrecto
+BEGIN TRANSACTION
+EXECUTE GrabaMuchasSencillas '5-10-2017 15:34:09', 100 -- Probando caso correcto
+
+
 
 SELECT * 
 FROM Boletos

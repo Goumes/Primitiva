@@ -190,6 +190,13 @@ AS
 
 			DECLARE @iteraciones INT
 			SET @iteraciones=0;
+			
+			DECLARE @tablaNumeros TABLE(
+			Numero TINYINT
+			)
+
+			DECLARE @iteraciones2 TINYINT
+			DECLARE @numeroRandom TINYINT
 			WHILE(@numeroApuestas>@iteraciones)
 			BEGIN
 				SET @IDApuesta = NEWID () -- Generamos un nuevo id de apuesta cada para cada apuesta
@@ -197,16 +204,13 @@ AS
 				VALUES
 				(@IDApuesta, @IDBoleto, 0) --Apuesta simple
 
-				DECLARE @tablaNumeros TABLE(
-				Numero TINYINT
-				)
-
-				DECLARE @iteraciones2 TINYINT = 0
+				SET @iteraciones2 = 0
+				
 
 				WHILE(@iteraciones2<6)
 				BEGIN
-					DECLARE @numeroRandom TINYINT = RAND () * (49) + 1
-					IF not(@numeroRandom in (SELECT * FROM @tablaNumeros))
+					SET @numeroRandom = RAND () * (49) + 1
+					IF (@numeroRandom not in (SELECT * FROM @tablaNumeros))
 					BEGIN
 						INSERT INTO @tablaNumeros(Numero)
 						VALUES
@@ -427,7 +431,7 @@ BEGIN TRANSACTION
 
 INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
-('5-10-2017 15:34:09', 4, 5)
+('6-10-2017 15:34:09', 4, 5)
 
 EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 34, 32, 12 ,24 --Probando numeros válidos. Funciona flama
 
@@ -443,7 +447,7 @@ EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 9 --Probando caso incorrect
 
 EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 0 --Probando caso incorrecto
 BEGIN TRANSACTION
-EXECUTE GrabaMuchasSencillas '5-10-2017 15:34:09', 100 -- Probando caso correcto
+EXECUTE GrabaMuchasSencillas '6-10-2017 15:34:09', 10000 -- Probando caso correcto
 
 
 

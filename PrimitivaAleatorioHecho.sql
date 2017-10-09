@@ -1,6 +1,7 @@
 CREATE DATABASE Primitiva
 
 --DROP DATABASE Primitiva
+--ROLLBACK
 
 GO
 
@@ -21,7 +22,7 @@ GO
 
 CREATE TABLE Boletos
 (
-	ID UNIQUEIDENTIFIER NOT NULL,
+	ID BIGINT NOT NULL,
 	FechaSorteo DATETIME NOT NULL,
 	Reintegro TINYINT NULL,
 
@@ -35,8 +36,8 @@ GO
 
 CREATE TABLE Apuestas
 (
-	ID UNIQUEIDENTIFIER NOT NULL,
-	ID_Boleto UNIQUEIDENTIFIER NOT NULL,
+	ID BIGINT NOT NULL,
+	ID_Boleto BIGINT NOT NULL,
 	Tipo BIT NOT NULL,
 	Estado BIT NOT NULL DEFAULT 0, -- 1 Completa, 0 no.
 
@@ -49,7 +50,7 @@ GO
 CREATE TABLE Numeros
 (
 	Valor TINYINT NOT NULL,
-	IDApuesta UNIQUEIDENTIFIER NOT NULL,
+	IDApuesta BIGINT NOT NULL,
 
 	CONSTRAINT CK_1y49Numeros CHECK (Valor BETWEEN 1 AND 49),
 	CONSTRAINT PK_Numeros PRIMARY KEY (Valor, IDApuesta),
@@ -134,11 +135,13 @@ CREATE PROCEDURE GrabaSencilla
 	@Num_6 TINYINT
 AS
 	BEGIN
-			DECLARE @IDBoleto UNIQUEIDENTIFIER
-			SET @IDBoleto = NEWID ()
+			DECLARE @IDBoleto BIGINT
+			SET @IDBoleto = (SELECT MAX (ID) + 1
+							FROM Boletos)
 
-			DECLARE @IDApuesta UNIQUEIDENTIFIER
-			SET @IDApuesta = NEWID ()
+			DECLARE @IDApuesta BIGINT
+			SET @IDApuesta = (SELECT MAX (ID) + 1
+								FROM Apuestas)
 
 				BEGIN TRANSACTION
 
@@ -177,10 +180,11 @@ GO
 CREATE PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
 AS
 	BEGIN
-		DECLARE @IDBoleto UNIQUEIDENTIFIER
-		SET @IDBoleto = NEWID ()
+		DECLARE @IDBoleto BIGINT
+		SET @IDBoleto = (SELECT MAX (ID) + 1
+							FROM Boletos)
 
-		DECLARE @IDApuesta UNIQUEIDENTIFIER
+		DECLARE @IDApuesta BIGINT
 		--SET @IDApuesta = NEWID () -- Usabamos el mismo id de apuesta para todas ellas
 		IF (@numeroApuestas < 9 AND @numeroApuestas > 0)
 		BEGIN
@@ -199,7 +203,8 @@ AS
 			DECLARE @numeroRandom TINYINT
 			WHILE(@numeroApuestas>@iteraciones)
 			BEGIN
-				SET @IDApuesta = NEWID () -- Generamos un nuevo id de apuesta cada para cada apuesta
+				SET @IDApuesta = (SELECT MAX (ID) + 1
+									FROM Apuestas) -- Generamos un nuevo id de apuesta cada para cada apuesta
 				INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
 				VALUES
 				(@IDApuesta, @IDBoleto, 0) --Apuesta simple
@@ -272,9 +277,10 @@ AS
 	BEGIN
 		BEGIN TRANSACTION
 		
-		DECLARE @IDBoleto UNIQUEIDENTIFIER = NEWID ()
-		DECLARE @IDApuesta UNIQUEIDENTIFIER = NEWID ()
-
+		DECLARE @IDBoleto BIGINT = (SELECT MAX (ID) + 1
+									FROM Boletos)
+		DECLARE @IDApuesta BIGINT = (SELECT MAX (ID) + 1
+									FROM Apuestas)
 				INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
 					VALUES
 					(@IDBoleto, @FechaSorteo, RAND () * 10)
@@ -353,7 +359,7 @@ GO
 CREATE TRIGGER numeroApuestaSencilla ON Apuestas
 AFTER UPDATE AS
 BEGIN
-	DECLARE @numero int
+	DECLARE @numero INT
 
 	IF EXISTS(SELECT * FROM inserted WHERE Tipo = 0)
 	BEGIN
@@ -381,7 +387,7 @@ GO
 CREATE TRIGGER numeroApuestaMultiple ON Apuestas
 AFTER UPDATE AS
 BEGIN
-	DECLARE @numero int
+	DECLARE @numero INT
 
 	IF EXISTS(SELECT * FROM inserted WHERE Tipo = 1)
 	BEGIN
@@ -412,7 +418,7 @@ GO
 CREATE TRIGGER NumeroApuestasPorBoleto ON Apuestas
 AFTER INSERT AS
 BEGIN
-	DECLARE @IDBoleto UNIQUEIDENTIFIER
+	DECLARE @IDBoleto BIGINT
 	SELECT @IDBoleto = ID_Boleto FROM inserted
 
 	IF ((SELECT COUNT (ID)
@@ -431,7 +437,7 @@ BEGIN TRANSACTION
 
 INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
-('6-10-2017 15:34:09', 4, 5)
+('10-10-2017 15:34:09', 4, 5)
 
 EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 34, 32, 12 ,24 --Probando numeros válidos. Funciona flama
 
@@ -447,7 +453,29 @@ EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 9 --Probando caso incorrect
 
 EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 0 --Probando caso incorrecto
 BEGIN TRANSACTION
-EXECUTE GrabaMuchasSencillas '6-10-2017 15:34:09', 10000 -- Probando caso correcto
+
+INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
+VALUES (1, '10-10-2017 15:34:09', 4)
+
+INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
+VALUES (1, 1, 0)
+
+INSERT INTO Numeros (IDApuesta, Valor)
+VALUES
+(1, 1),
+(1, 2),
+(1, 3),
+(1, 4),
+(1, 5),
+(1, 6)
+
+UPDATE Apuestas
+SET Estado = 1
+WHERE ID = 1
+
+GO
+
+EXECUTE GrabaMuchasSencillas '10-10-2017 15:34:09', 10000 -- Probando caso correcto
 
 
 

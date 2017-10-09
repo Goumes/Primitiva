@@ -180,6 +180,10 @@ AS
 		DECLARE @IDBoleto UNIQUEIDENTIFIER
 		SET @IDBoleto = NEWID ()
 
+		DECLARE @tablaNumeros TABLE(
+			Numero TINYINT
+			)
+
 		DECLARE @IDApuesta UNIQUEIDENTIFIER
 		--SET @IDApuesta = NEWID () -- Usabamos el mismo id de apuesta para todas ellas
 		IF (@numeroApuestas < 9 AND @numeroApuestas > 0)
@@ -191,9 +195,7 @@ AS
 			DECLARE @iteraciones INT
 			SET @iteraciones=0;
 			
-			DECLARE @tablaNumeros TABLE(
-			Numero TINYINT
-			)
+			
 
 			DECLARE @iteraciones2 TINYINT
 			DECLARE @numeroRandom TINYINT
@@ -223,7 +225,7 @@ AS
 				INSERT INTO Numeros (Valor, IDApuesta)
 				SELECT Numero,@IDApuesta from @tablaNumeros 
 				--(SELECT Numero, @IDApuesta FROM @tablaNumeros) La variable tabla tablaNumeros no tiene IDApuesta
-				DELETE @tablaNumeros
+				DELETE from @tablaNumeros
 				SET @iteraciones = @iteraciones+1;
 
 				UPDATE Apuestas
@@ -431,7 +433,7 @@ BEGIN TRANSACTION
 
 INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
-('6-10-2017 15:34:09', 4, 5)
+('10-10-2017 15:34:09', 4, 5)
 
 EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 34, 32, 12 ,24 --Probando numeros válidos. Funciona flama
 
@@ -447,7 +449,7 @@ EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 9 --Probando caso incorrect
 
 EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 0 --Probando caso incorrecto
 BEGIN TRANSACTION
-EXECUTE GrabaMuchasSencillas '6-10-2017 15:34:09', 10000 -- Probando caso correcto
+EXECUTE GrabaMuchasSencillas '10-10-2017 15:34:09', 10000 -- Probando caso correcto
 
 
 

@@ -71,6 +71,17 @@ CREATE TABLE NumerosSorteo
 
 GO
 
+CREATE TABLE Premios
+(
+	FechaSorteo DATETIME NOT NULL,
+	
+	CONSTRAINT PK_Premios PRIMARY KEY (FechaSorteo),
+	CONSTRAINT FK_Premios_Sorteos FOREIGN KEY (FechaSorteo) REFERENCES Sorteos (Fecha) ON UPDATE CASCADE ON DELETE CASCADE
+
+)
+
+GO
+
 CREATE TRIGGER HoraRestante ON Boletos
 AFTER INSERT AS
 BEGIN
@@ -432,6 +443,8 @@ END
 
 GO
 
+
+
 -- COMIENZO PRUEBAS
 BEGIN TRANSACTION
 
@@ -476,7 +489,6 @@ WHERE ID = 1
 GO
 
 EXECUTE GrabaMuchasSencillas '10-10-2017 15:34:09', 10000 -- Probando caso correcto
-
 
 
 SELECT * 

@@ -3,7 +3,7 @@ PROCEDIMIENTOS
 • HECHO . Implementa un procedimiento almacenado GrabaSencilla que grabe un boleto con una sola apuesta simple. Datos de entrada: El sorteo y los seis números
 • HECHO. Implementa un procedimiento GrabaMuchasSencillas que genere n boletos con una sola apuesta sencilla utilizando el procedimiento GrabaSencilla. Datos de entrada: El sorteo y el valor de n
 • HECHO. Implementa un procedimiento GrabaSencillaAleatoria que genere un boleto con n apuestas sencillas, cuyos números se generarán de forma aleatoria.
-• NO ESTA HECHO. Implementa un procedimiento almacenado GrabaMultiple que grabe una apuesta multiple. Datos de entrada: El sorteo y entre 5 y 11 números
+• HECHO. Implementa un procedimiento almacenado GrabaMultiple que grabe una apuesta multiple. Datos de entrada: El sorteo y entre 5 y 11 números
 
 
 RESTRICCIONES
@@ -14,8 +14,39 @@ Mediante restricciones check y triggers, asegurate de que se cumplen las siguien
 • HACIÓ. Una vez insertado un boleto, no se pueden modificar sus números
 • HECHO. Todos los números están comprendido entre 1 y 49
 • HECHO. En las apuestas no se repiten números
-• NOZEZAE. Las apuestas sencillas tienen seis números
-• NO HECHO. Las apuestas múltiples tienen 5, 7, 8, 9, 10 u 11 números
+• HECHO. Las apuestas sencillas tienen seis números
+• JECHO. Las apuestas múltiples tienen 5, 7, 8, 9, 10 u 11 números
+
+PREMIOS: 
+Especial (6 Aciertos + Reintegro) .. 
+1ª (6 Aciertos) -------------------- 
+2ª (5 Aciertos + Complementario).... 
+3ª (5 Aciertos)	-------------------- 
+4ª (4 Aciertos)..................... 
+5ª (3 Aciertos)	-------------------- 8€
+Reintegro .......................... 1€
+
+No considerar que el premio de 4º no pueda ser mayor al de 5º i asi sucesivamente.
+
+Hacer una tabla con tabla premios apuestas multiples.
+Hacer una tabla por acertantes por cada premio, cantidad del premio y categoria.
+
+PROCESO DE ASIGNAR PREMIOS:
+1.- Calcular recaudación.
+2.- Calcular numero de premios por categoria.
+3.- Calcular el importe por cada categoria.
+4.- Asignar a cada boleto el premio correspondiente.
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -31,3 +62,6 @@ de numeros, apuesta y boleto. (NO VIABLE)
 - Opcion 3: Insertar los números en la misma transacción, y cuando se cambie el estado de apuesta a completa, se ejecute un trigger que haga inner join 
 	    entre inserted de apuestas y numeros, y cuente los numeros con el ID de la apuesta cambiada. En caso que no tenga 6 numero, dejarla como "en proceso" y
 	    que cada vez que se cree un nuevo sorteo, busque las apuestas anteriores que esten "en proceso" y las elimine (CONSULTAR LEO)
+
+
+

@@ -82,8 +82,7 @@ CREATE TABLE Premios
 	CategoriaE MONEY NOT NULL,
 
 	
-	CONSTRAINT PK_Premios PRIMARY KEY (FechaSorteo),
-	CONSTRAINT FK_Premios_Sorteos FOREIGN KEY (FechaSorteo) REFERENCES Sorteos (Fecha) ON UPDATE CASCADE ON DELETE CASCADE
+	CONSTRAINT PK_Premios PRIMARY KEY (FechaSorteo)
 
 )
 
@@ -129,37 +128,63 @@ GO
 
 INSERT INTO Aciertos (Pronostico, NumerosAcertados, Categoria1,Categoria2,Categoria3, Categoria4, Categoria5, CategoriaE)
 VALUES
-(5, 2, NULL, NULL, NULL, NULL, 4, NULL),
+(5, '2', NULL, NULL, NULL, NULL, 4, NULL),
 
-(5, 3, NULL, NULL, NULL, 3, 41, NULL),
-(7, 3, NULL, NULL, NULL, NULL, 4, NULL),
-(8, 3, NULL, NULL, NULL, NULL, 10, NULL),
-(9, 3, NULL, NULL, NULL, NULL, 20, NULL),
-(10, 3, NULL, NULL, NULL, NULL, 35, NULL),
-(11, 3, NULL, NULL, NULL, NULL, 56, NULL),
+(5, '3', NULL, NULL, NULL, 3, 41, NULL),
+(7, '3', NULL, NULL, NULL, NULL, 4, NULL),
+(8, '3', NULL, NULL, NULL, NULL, 10, NULL),
+(9, '3', NULL, NULL, NULL, NULL, 20, NULL),
+(10, '3', NULL, NULL, NULL, NULL, 35, NULL),
+(11, '3', NULL, NULL, NULL, NULL, 56, NULL),
 
-(5, 4, NULL, NULL, 2, 42, NULL, NULL),
-(7, 4, NULL, NULL, NULL, 3, 4, NULL),
-(8, 4, NULL, NULL, NULL, 6, 16, NULL),
-(9, 4, NULL, NULL, NULL, 10, 40, NULL),
-(10, 4, NULL, NULL, NULL, 15, 80, NULL),
-(11, 4, NULL, NULL, NULL, 21, 140, NULL),
+(5, '4', NULL, NULL, 2, 42, NULL, NULL),
+(7, '4', NULL, NULL, NULL, 3, 4, NULL),
+(8, '4', NULL, NULL, NULL, 6, 16, NULL),
+(9, '4', NULL, NULL, NULL, 10, 40, NULL),
+(10, '4', NULL, NULL, NULL, 15, 80, NULL),
+(11, '4', NULL, NULL, NULL, 21, 140, NULL),
 
 (5, '4C', NULL, 2, NULL, 42, NULL, NULL),
 
-(5, 5, 1, 1, 42, NULL, NULL, NULL),
-(7, 5, NULL, NULL, 2, 5, NULL, NULL),
-(8, 5, NULL, NULL, 3, 15, 10, NULL),
-(9, 5, NULL, NULL, 4, 30, 40, NULL),
-(10, 5, NULL, NULL, 5, 50, 100, NULL),
-(11, 5, NULL, NULL, 6, 75, 200, NULL),
+(5, '5', 1, 1, 42, NULL, NULL, NULL),
+(7, '5', NULL, NULL, 2, 5, NULL, NULL),
+(8, '5', NULL, NULL, 3, 15, 10, NULL),
+(9, '5', NULL, NULL, 4, 30, 40, NULL),
+(10, '5', NULL, NULL, 5, 50, 100, NULL),
+(11, '5', NULL, NULL, 6, 75, 200, NULL),
 
-(5, 5, 1, 1, 42, NULL, NULL, NULL),
-(7, '5C', NULL, NULL, 2, 5, NULL, NULL),
-(8, '5C', NULL, NULL, 3, 15, 10, NULL),
-(9, '5C', NULL, NULL, 4, 30, 40, NULL),
-(10, '5C', NULL, NULL, 5, 50, 100, NULL),
-(11, '5C', NULL, NULL, 6, 75, 200, NULL),
+(5, '5R', 1, 1, 42, NULL, NULL, 1),
+
+
+(7, '5C', NULL, 1, 1, 5, NULL, NULL),
+(8, '5C', NULL, 1, 2, 15, 10, NULL),
+(9, '5C', NULL, 1, 3, 30, 40, NULL),
+(10, '5C', NULL, 1, 4, 50, 100, NULL),
+(11, '5C', NULL, 1, 5, 75, 200, NULL),
+
+(7, '6', 1, NULL, 6, NULL, NULL, NULL),
+(8, '6', 1, NULL, 12, 15, NULL, NULL),
+(9, '6', 1, NULL, 18, 45, 20, NULL),
+(10, '6', 1, NULL, 24, 90, 80, NULL),
+(11, '6', 1, NULL, 30, 150, 200, NULL),
+
+(7, '6C', 1, 6, NULL, NULL, NULL, NULL),
+(8, '6C', 1, 6, 6, 15, NULL, NULL),
+(9, '6C', 1, 6, 12, 45, 20, NULL),
+(10, '6C', 1, 6, 18, 90, 80, NULL),
+(11, '6C', 1, 6, 24, 150, 200, NULL),
+
+(7, '6R', 1, NULL, 6, NULL, NULL, 1),
+(8, '6R', 1, NULL, 12, 15, NULL, 1),
+(9, '6R', 1, NULL, 18, 45, 20, 1),
+(10, '6R', 1, NULL, 24, 90, 80, 1),
+(11, '6R', 1, NULL, 30, 150, 200, 1),
+
+(7, '6RC', 1, 6, NULL, NULL, NULL, 1),
+(8, '6RC', 1, 6, 6, 15, NULL, 1),
+(9, '6RC', 1, 6, 12, 45, 20, 1),
+(10, '6RC', 1, 6, 18, 90, 80, 1),
+(11, '6RC', 1, 6, 24, 150, 200, 1)
 
 GO
 
@@ -563,6 +588,9 @@ FROM Apuestas
 
 SELECT *
 FROM Numeros
+
+SELECT *
+FROM Aciertos
 
 ROLLBACK
 

@@ -74,11 +74,36 @@ GO
 CREATE TABLE Premios
 (
 	FechaSorteo DATETIME NOT NULL,
+	Categoria1 MONEY NOT NULL,
+	Categoria2 MONEY NOT NULL,
+	Categoria3 MONEY NOT NULL,
+	Categoria4 MONEY NOT NULL,
+	Categoria5 MONEY NOT NULL,
+	CategoriaE MONEY NOT NULL,
+
 	
 	CONSTRAINT PK_Premios PRIMARY KEY (FechaSorteo),
 	CONSTRAINT FK_Premios_Sorteos FOREIGN KEY (FechaSorteo) REFERENCES Sorteos (Fecha) ON UPDATE CASCADE ON DELETE CASCADE
 
 )
+
+GO
+
+CREATE TABLE Aciertos
+(
+	Pronostico TINYINT NOT NULL,
+	NumerosAcertados VARCHAR (10) NOT NULL,
+	--FechaSorteo DATETIME NOT NULL,
+	Categoria1 TINYINT NULL,
+	Categoria2 TINYINT NULL,
+	Categoria3 TINYINT NULL,
+	Categoria4 TINYINT NULL,
+	Categoria5 TINYINT NULL,
+	CategoriaE TINYINT NULL,
+
+	CONSTRAINT PK_Aciertos PRIMARY KEY (Pronostico, NumerosAcertados)--,
+	--CONSTRAINT FK_Aciertos_Sorteos FOREIGN KEY (FechaSorteo) REFERENCES Sorteos (Fecha) ON UPDATE CASCADE ON DELETE NO ACTION
+) 
 
 GO
 
@@ -99,6 +124,42 @@ BEGIN
 		END
 	END
 END
+
+GO
+
+INSERT INTO Aciertos (Pronostico, NumerosAcertados, Categoria1,Categoria2,Categoria3, Categoria4, Categoria5, CategoriaE)
+VALUES
+(5, 2, NULL, NULL, NULL, NULL, 4, NULL),
+
+(5, 3, NULL, NULL, NULL, 3, 41, NULL),
+(7, 3, NULL, NULL, NULL, NULL, 4, NULL),
+(8, 3, NULL, NULL, NULL, NULL, 10, NULL),
+(9, 3, NULL, NULL, NULL, NULL, 20, NULL),
+(10, 3, NULL, NULL, NULL, NULL, 35, NULL),
+(11, 3, NULL, NULL, NULL, NULL, 56, NULL),
+
+(5, 4, NULL, NULL, 2, 42, NULL, NULL),
+(7, 4, NULL, NULL, NULL, 3, 4, NULL),
+(8, 4, NULL, NULL, NULL, 6, 16, NULL),
+(9, 4, NULL, NULL, NULL, 10, 40, NULL),
+(10, 4, NULL, NULL, NULL, 15, 80, NULL),
+(11, 4, NULL, NULL, NULL, 21, 140, NULL),
+
+(5, '4C', NULL, 2, NULL, 42, NULL, NULL),
+
+(5, 5, 1, 1, 42, NULL, NULL, NULL),
+(7, 5, NULL, NULL, 2, 5, NULL, NULL),
+(8, 5, NULL, NULL, 3, 15, 10, NULL),
+(9, 5, NULL, NULL, 4, 30, 40, NULL),
+(10, 5, NULL, NULL, 5, 50, 100, NULL),
+(11, 5, NULL, NULL, 6, 75, 200, NULL),
+
+(5, 5, 1, 1, 42, NULL, NULL, NULL),
+(7, '5C', NULL, NULL, 2, 5, NULL, NULL),
+(8, '5C', NULL, NULL, 3, 15, 10, NULL),
+(9, '5C', NULL, NULL, 4, 30, 40, NULL),
+(10, '5C', NULL, NULL, 5, 50, 100, NULL),
+(11, '5C', NULL, NULL, 6, 75, 200, NULL),
 
 GO
 
@@ -450,7 +511,7 @@ BEGIN TRANSACTION
 
 INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
-('10-10-2017 15:34:09', 4, 5)
+('14-10-2017 15:34:09', 4, 5)
 
 EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 34, 32, 12 ,24 --Probando numeros válidos. Funciona flama
 
@@ -468,7 +529,7 @@ EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 0 --Probando caso incorrect
 BEGIN TRANSACTION
 
 INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
-VALUES (1, '10-10-2017 15:34:09', 4)
+VALUES (1, '14-10-2017 15:34:09', 4)
 
 INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
 VALUES (1, 1, 0)
@@ -488,7 +549,7 @@ WHERE ID = 1
 
 GO
 
-EXECUTE GrabaMuchasSencillas '10-10-2017 15:34:09', 10000 -- Probando caso correcto
+EXECUTE GrabaMuchasSencillas '14-10-2017 15:34:09', 10000 -- Probando caso correcto
 
 
 SELECT * 

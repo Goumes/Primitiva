@@ -1,5 +1,12 @@
+
+
+
 TAREAS:
-Terminar tabla premios.
+Tabla premios. HECHO
+Tabla aciertos. HECHO
+Procedimientos calcular recaudación sencilla. HECHO
+Procedimientos calcular recaudación multiple. 
+Asignar premios a boletos. 
 
 
 
@@ -12,21 +19,19 @@ Especial (6 Aciertos + Reintegro) ..
 5ª (3 Aciertos)	-------------------- 8€
 Reintegro .......................... 1€
 
+
 No considerar que el premio de 4º no pueda ser mayor al de 5º i asi sucesivamente.
+
 
 Hacer una tabla con tabla premios apuestas multiples.
 Hacer una tabla por acertantes por cada premio, cantidad del premio y categoria.
+
 
 PROCESO DE ASIGNAR PREMIOS:
 1.- Calcular recaudación.
 2.- Calcular numero de premios por categoria.
 3.- Calcular el importe por cada categoria.
 4.- Asignar a cada boleto el premio correspondiente.
-
-
-
-
-
 
 
 

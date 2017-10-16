@@ -53,7 +53,7 @@ CREATE TABLE Numeros
 	IDApuesta BIGINT NOT NULL,
 
 	CONSTRAINT CK_1y49Numeros CHECK (Valor BETWEEN 1 AND 49),
-	CONSTRAINT PK_Numeros PRIMARY KEY (Valor, IDApuesta),
+	CONSTRAINT PK_Numeros PRIMARY KEY (IDApuesta, Valor),
 	CONSTRAINT FK_Numeros_Apuestas FOREIGN KEY (IDApuesta) REFERENCES Apuestas (ID) ON UPDATE CASCADE ON DELETE CASCADE
 )
 
@@ -64,7 +64,7 @@ CREATE TABLE NumerosSorteo
 	Valor TINYINT NOT NULL,
 	FechaSorteo DATETIME NOT NULL,
 
-	CONSTRAINT PK_NumerosSorteo PRIMARY KEY (Valor, FechaSorteo),
+	CONSTRAINT PK_NumerosSorteo PRIMARY KEY (FechaSorteo, Valor),
 	CONSTRAINT FK_Numeros_Sorteo FOREIGN KEY (FechaSorteo) REFERENCES Sorteos (Fecha) ON UPDATE CASCADE ON DELETE CASCADE,
 	CONSTRAINT CK_1y49Sorteo CHECK (Valor BETWEEN 1 AND 49)
 )
@@ -274,7 +274,7 @@ GO
 --!!!!!!!!!!!!!COÑO LA TABLA TEMPORAL DE NUMEROS NO SE BORRA, PRIMERO SE METEN 6, DESPUES 12, 
 --!!!!!!!!!!!!!DESPUES 18 ETCETCETC HAY QUE BORRARLA DESPUES DE CADA INSERT EN APUESTA
 --!!ª!!!!!!ª·ª"qwahser&·w%&j$%"jk&i·%%&j%%tykstjaerjyhkaWKRHASERKETYKEWR
-CREATE PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
+ALTER PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
 AS
 	BEGIN
 		DECLARE @IDBoleto BIGINT
@@ -292,6 +292,7 @@ AS
 			DECLARE @iteraciones INT
 			SET @iteraciones=0;
 			
+
 			DECLARE @tablaNumeros TABLE(
 			Numero TINYINT
 			)
@@ -306,9 +307,10 @@ AS
 				VALUES
 				(@IDApuesta, @IDBoleto, 0) --Apuesta simple
 
+				
 				SET @iteraciones2 = 0
 				
-
+				
 				WHILE(@iteraciones2<6)
 				BEGIN
 					SET @numeroRandom = RAND () * (49) + 1
@@ -321,16 +323,19 @@ AS
 					END
 				END
 				--SELECT * FROM @tablaNumeros
-
-				INSERT INTO Numeros (Valor, IDApuesta)
-				SELECT Numero,@IDApuesta from @tablaNumeros 
+				
+				INSERT INTO Numeros (IDApuesta, Valor)
+				SELECT @IDApuesta, Numero from @tablaNumeros 
 				--(SELECT Numero, @IDApuesta FROM @tablaNumeros) La variable tabla tablaNumeros no tiene IDApuesta
 				DELETE @tablaNumeros
+				
+				
 				SET @iteraciones = @iteraciones+1;
 
 				UPDATE Apuestas
 				SET Estado = 1
 				WHERE ID = @IDApuesta
+
 			END
 		END
 		ELSE
@@ -342,6 +347,17 @@ AS
 
 	GO
 
+CREATE PROCEDURE GrabarBoletos (@IDSorteo DATETIME, @numeroBoletos INT)
+AS
+	BEGIN
+		DECLARE @i INT = 0
+		WHILE (@i < @numeroBoletos)
+		BEGIN
+			INSERT INTO Boletos (FechaSorteo)
+		END
+	END
+
+GO
 
 CREATE PROCEDURE GrabaMuchasSencillas (@fechaSorteo DATETIME, @numeroBoletos INT)
 AS
@@ -534,10 +550,6 @@ GO
 -- COMIENZO PRUEBAS
 BEGIN TRANSACTION
 
-INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
-VALUES
-('14-10-2017 15:34:09', 4, 5)
-
 EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 34, 32, 12 ,24 --Probando numeros válidos. Funciona flama
 
 EXECUTE GrabaSencilla '5-10-2017 13:34:09', 1, 5, 34, 34, 12 ,24 --Probando numeros repetidos. Funciona flama
@@ -551,10 +563,16 @@ EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 5 --Probando caso correcto
 EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 9 --Probando caso incorrecto
 
 EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 0 --Probando caso incorrecto
+
 BEGIN TRANSACTION
 
+
+INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
+VALUES
+('17-10-2017 15:34:09', 4, 5)
+
 INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
-VALUES (1, '14-10-2017 15:34:09', 4)
+VALUES (1, '17-10-2017 15:34:09', 4)
 
 INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
 VALUES (1, 1, 0)
@@ -574,7 +592,7 @@ WHERE ID = 1
 
 GO
 
-EXECUTE GrabaMuchasSencillas '14-10-2017 15:34:09', 10000 -- Probando caso correcto
+EXECUTE GrabaMuchasSencillas '17-10-2017 15:34:09', 10000 -- Probando caso correcto
 
 
 SELECT * 
@@ -588,6 +606,7 @@ FROM Apuestas
 
 SELECT *
 FROM Numeros
+ORDER BY IDApuesta
 
 SELECT *
 FROM Aciertos
@@ -605,7 +624,17 @@ VALUES
 ('18-06-2015 13:34:09', 4, 5)
 EXECUTE GrabaSencillaAleatoria '18-06-2015 13:34:09',8
 --DELETE from Sorteos where Fecha='18-06-2015 13:34:09'
---DELETE from Numeros
+
+
+/*
+DELETE from NumerosSorteo
+DELETE from Numeros
+DELETE FROM Apuestas
+DELETE FROM Boletos
+DELETE FROM Sorteos
+*/
+
+
 select * from Sorteos
 select * from boletos
 select * from Apuestas

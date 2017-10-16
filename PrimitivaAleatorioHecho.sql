@@ -274,7 +274,7 @@ GO
 --!!!!!!!!!!!!!COÑO LA TABLA TEMPORAL DE NUMEROS NO SE BORRA, PRIMERO SE METEN 6, DESPUES 12, 
 --!!!!!!!!!!!!!DESPUES 18 ETCETCETC HAY QUE BORRARLA DESPUES DE CADA INSERT EN APUESTA
 --!!ª!!!!!!ª·ª"qwahser&·w%&j$%"jk&i·%%&j%%tykstjaerjyhkaWKRHASERKETYKEWR
-ALTER PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
+CREATE PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
 AS
 	BEGIN
 		DECLARE @IDBoleto BIGINT
@@ -534,9 +534,10 @@ BEGIN
 	DECLARE @IDBoleto BIGINT
 	SELECT @IDBoleto = ID_Boleto FROM inserted
 
-	IF ((SELECT COUNT (ID)
+	IF ((SELECT COUNT (ID) AS numero
 			FROM Apuestas
-			WHERE ID_Boleto = @IDBoleto AND Tipo = 1) > 1)
+			WHERE Tipo = 1
+			HAVING MAX (ID) = @IDBoleto) > 1)
 			BEGIN
 				ROLLBACK
 			END

@@ -545,6 +545,91 @@ END
 
 GO
 
+-- PROCEDIMIENTOS DE RECOLECCION DE APUESTAS
+CREATE PROCEDURE RecoleccionApuestasSencillas (@fechaSorteo DATETIME)
+	AS
+		BEGIN
+			DECLARE @totalSencillas INT
+			SET @totalSencillas=0
+
+			SET @totalSencillas = (SELECT COUNT (*)
+								FROM Apuestas
+								WHERE Tipo = 0 AND Estado = 1)
+			PRINT @totalSencillas
+		END
+	GO
+
+
+CREATE PROCEDURE RecoleccionApuestasMultiples (@fechaSorteo DATETIME)
+	AS
+		BEGIN 
+			DECLARE @totalMultiples INT
+			SET @totalMultiples=0
+			DECLARE @numerosApuesta INT
+			SET @numerosApuesta=0
+			DECLARE @IDApuesta INT 
+			SET @IDApuesta =0 
+
+
+			/*Si existen apuestas que sean de tipo multiple*/
+			
+			WHILE EXISTS (SELECT *
+				FROM Apuestas
+				WHERE Tipo = 1) 
+
+				/*HAY QUE CONTAR LOS NUMEROS DE CADA APUESTA */
+
+				/*//////////////////////////////////////////////////////////////// */
+
+				BEGIN
+
+					
+					/* hay que especificar el IDApuesta */
+					SET @numerosApuesta = (SELECT COUNT (*)
+										  FROM Numeros AS N
+										  JOIN 
+										  Apuestas AS A
+										  ON N.IDApuesta=A.ID
+										  )
+
+					IF(@numerosApuesta = 5)
+					BEGIN
+						SET @totalMultiples += 44
+					END
+
+					IF(@numerosApuesta = 7)
+					BEGIN
+						SET @totalMultiples += 7
+					END
+
+					IF(@numerosApuesta = 8)
+					BEGIN
+						SET @totalMultiples += 28
+					END
+
+					IF(@numerosApuesta = 9)
+					BEGIN
+						SET @totalMultiples += 84
+					END
+
+					IF(@numerosApuesta = 10)
+					BEGIN
+						SET @totalMultiples += 210
+					END
+
+					IF(@numerosApuesta = 11)
+					BEGIN
+						SET @totalMultiples += 462
+					END
+				
+				END
+
+				RETURN @totalMultiples
+
+		END
+
+	GO
+
 
 
 -- COMIENZO PRUEBAS

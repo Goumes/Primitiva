@@ -274,7 +274,7 @@ GO
 --!!!!!!!!!!!!!COÑO LA TABLA TEMPORAL DE NUMEROS NO SE BORRA, PRIMERO SE METEN 6, DESPUES 12, 
 --!!!!!!!!!!!!!DESPUES 18 ETCETCETC HAY QUE BORRARLA DESPUES DE CADA INSERT EN APUESTA
 --!!ª!!!!!!ª·ª"qwahser&·w%&j$%"jk&i·%%&j%%tykstjaerjyhkaWKRHASERKETYKEWR
-CREATE PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
+ALTER PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
 AS
 	BEGIN
 		DECLARE @IDBoleto BIGINT
@@ -380,12 +380,12 @@ CREATE PROCEDURE GrabaMultiple
 	@Num_3 TINYINT,
 	@Num_4 TINYINT,
 	@Num_5 TINYINT,
-	@Num_6 TINYINT = NULL,
-	@Num_7 TINYINT = NULL,
-	@Num_8 TINYINT = NULL,
-	@Num_9 TINYINT = NULL,
-	@Num_10 TINYINT = NULL,
-	@Num_11 TINYINT = NULL
+	@Num_6 TINYINT  NULL, --= NULL,
+	@Num_7 TINYINT  NULL, --= NULL,
+	@Num_8 TINYINT  NULL, --= NULL,
+	@Num_9 TINYINT  NULL, --= NULL,
+	@Num_10 TINYINT NULL, --= NULL,
+	@Num_11 TINYINT NULL  --= NULL
 AS
 	BEGIN
 		BEGIN TRANSACTION
@@ -411,6 +411,9 @@ AS
 				-- .
 				-- El carry Goumes da luz verde, pero con una pequeña modificación.
 				-- Fran jugó lee sin support.
+				--!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+				--!!!!!!!! ESTO ESTA MAL, solo mete apuestas de 5 !!!!!!!!!!!
+				--!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 				INSERT INTO Numeros (IDApuesta,	Valor)
 					VALUES
 					(@IDApuesta, @Num_1),
@@ -534,10 +537,9 @@ BEGIN
 	DECLARE @IDBoleto BIGINT
 	SELECT @IDBoleto = ID_Boleto FROM inserted
 
-	IF ((SELECT COUNT (ID) AS numero
+	IF ((SELECT COUNT (ID)
 			FROM Apuestas
-			WHERE Tipo = 1
-			HAVING MAX (ID) = @IDBoleto) > 1)
+			WHERE ID_Boleto = @IDBoleto AND Tipo = 1) > 1)
 			BEGIN
 				ROLLBACK
 			END
@@ -571,62 +573,61 @@ CREATE PROCEDURE RecoleccionApuestasMultiples (@fechaSorteo DATETIME)
 			DECLARE @IDApuesta INT 
 			SET @IDApuesta =0 
 
+			BEGIN
 
-			/*Si existen apuestas que sean de tipo multiple*/
-			
-			WHILE EXISTS (SELECT *
-				FROM Apuestas
-				WHERE Tipo = 1) 
+			SET @numerosApuesta = (SELECT COUNT (*)
+								FROM Apuestas AS A
+								WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
+																	FROM Numeros AS N WHERE A.ID=N.IDApuesta)=5
+								)
 
-				/*HAY QUE CONTAR LOS NUMEROS DE CADA APUESTA */
+			SET @totalMultiples += @numerosApuesta * 44
 
-				/*//////////////////////////////////////////////////////////////// */
+			SET @numerosApuesta = (SELECT COUNT (*)
+								FROM Apuestas AS A
+								WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
+																	FROM Numeros AS N WHERE A.ID=N.IDApuesta)=7
+								)
+			SET @totalMultiples += @numerosApuesta * 7
 
-				BEGIN
 
-					
-					/* hay que especificar el IDApuesta */
-					SET @numerosApuesta = (SELECT COUNT (*)
-										  FROM Numeros AS N
-										  JOIN 
-										  Apuestas AS A
-										  ON N.IDApuesta=A.ID
-										  )
+			SET @numerosApuesta = (SELECT COUNT (*)
+								FROM Apuestas AS A
+								WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
+																	FROM Numeros AS N WHERE A.ID=N.IDApuesta)=8
+								)
+			SET @totalMultiples += @numerosApuesta * 28
 
-					IF(@numerosApuesta = 5)
-					BEGIN
-						SET @totalMultiples += 44
-					END
 
-					IF(@numerosApuesta = 7)
-					BEGIN
-						SET @totalMultiples += 7
-					END
+			SET @numerosApuesta = (SELECT COUNT (*)
+								FROM Apuestas AS A
+								WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
+																	FROM Numeros AS N WHERE A.ID=N.IDApuesta)=9
+								)
+			SET @totalMultiples += @numerosApuesta * 84
 
-					IF(@numerosApuesta = 8)
-					BEGIN
-						SET @totalMultiples += 28
-					END
 
-					IF(@numerosApuesta = 9)
-					BEGIN
-						SET @totalMultiples += 84
-					END
+			SET @numerosApuesta = (SELECT COUNT (*)
+								FROM Apuestas AS A
+								WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
+																	FROM Numeros AS N WHERE A.ID=N.IDApuesta)=10
+								)
+			SET @totalMultiples += @numerosApuesta * 210
 
-					IF(@numerosApuesta = 10)
-					BEGIN
-						SET @totalMultiples += 210
-					END
 
-					IF(@numerosApuesta = 11)
-					BEGIN
-						SET @totalMultiples += 462
-					END
-				
-				END
+			SET @numerosApuesta = (SELECT COUNT (*)
+								FROM Apuestas AS A
+								WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
+																	FROM Numeros AS N WHERE A.ID=N.IDApuesta)=11
+								)
+			SET @totalMultiples += @numerosApuesta * 462
+
+
+		END
+				PRINT @totalMultiples
 
 				RETURN @totalMultiples
-
+				
 		END
 
 	GO
@@ -679,6 +680,37 @@ WHERE ID = 1
 GO
 
 EXECUTE GrabaMuchasSencillas '17-10-2017 15:34:09', 10000 -- Probando caso correcto
+
+
+/* PRUEBAS RECOLECCION DE RECAUDACION MANILLA*/
+
+EXECUTE RecoleccionApuestasMultiples '17-10-2017 15:34:09'
+
+EXECUTE GrabaMultiple '17-10-2017 15:34:09',1,2,3,4,5,6,7,8,9
+
+INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
+VALUES
+('17-10-2017 15:34:09', 4, 5)
+
+INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
+VALUES (4, '17-10-2017 15:34:09', 4)
+
+INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
+VALUES (4, 4, 1)
+
+INSERT INTO Numeros (IDApuesta, Valor)
+VALUES
+(4, 1),
+(4, 2),
+(4, 3),
+(4, 4),
+(4, 5)
+
+UPDATE Apuestas
+SET Estado = 1
+
+/*FIN PRUEBAS RECOLECCION */
+
 
 
 SELECT * 

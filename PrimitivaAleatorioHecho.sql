@@ -274,7 +274,7 @@ GO
 --!!!!!!!!!!!!!COÑO LA TABLA TEMPORAL DE NUMEROS NO SE BORRA, PRIMERO SE METEN 6, DESPUES 12, 
 --!!!!!!!!!!!!!DESPUES 18 ETCETCETC HAY QUE BORRARLA DESPUES DE CADA INSERT EN APUESTA
 --!!ª!!!!!!ª·ª"qwahser&·w%&j$%"jk&i·%%&j%%tykstjaerjyhkaWKRHASERKETYKEWR
-ALTER PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
+CREATE PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
 AS
 	BEGIN
 		DECLARE @IDBoleto BIGINT
@@ -345,8 +345,9 @@ AS
 	END
 
 
-	GO
+GO
 
+/* ESTO QUE EH?! (Javi) */
 CREATE PROCEDURE GrabarBoletos (@IDSorteo DATETIME, @numeroBoletos INT)
 AS
 	BEGIN
@@ -354,8 +355,8 @@ AS
 		WHILE (@i < @numeroBoletos)
 		BEGIN
 			INSERT INTO Boletos (FechaSorteo)
-		END
 	END
+	
 
 GO
 
@@ -380,12 +381,12 @@ CREATE PROCEDURE GrabaMultiple
 	@Num_3 TINYINT,
 	@Num_4 TINYINT,
 	@Num_5 TINYINT,
-	@Num_6 TINYINT  NULL, --= NULL,
-	@Num_7 TINYINT  NULL, --= NULL,
-	@Num_8 TINYINT  NULL, --= NULL,
-	@Num_9 TINYINT  NULL, --= NULL,
-	@Num_10 TINYINT NULL, --= NULL,
-	@Num_11 TINYINT NULL  --= NULL
+	@Num_6 TINYINT  = NULL,
+	@Num_7 TINYINT  = NULL,
+	@Num_8 TINYINT  = NULL,
+	@Num_9 TINYINT  = NULL,
+	@Num_10 TINYINT = NULL,
+	@Num_11 TINYINT = NULL
 AS
 	BEGIN
 		BEGIN TRANSACTION
@@ -421,37 +422,37 @@ AS
 					(@IDApuesta, @Num_3),
 					(@IDApuesta, @Num_4),
 					(@IDApuesta, @Num_5)
-				IF @Num_6!=NULL
+				IF @Num_6 IS NOT NULL
 				BEGIN
 					INSERT INTO Numeros (IDApuesta, Valor)
 						VALUES
 						(@IDApuesta, @Num_6)
 				END
-				IF @Num_7!=NULL
+				IF @Num_7 IS NOT NULL
 				BEGIN
 					INSERT INTO Numeros (IDApuesta, Valor)
 						VALUES
 						(@IDApuesta, @Num_7)
 				END
-				IF @Num_8!=NULL
+				IF @Num_8 IS NOT NULL
 				BEGIN
 					INSERT INTO Numeros (IDApuesta, Valor)
 						VALUES
 						(@IDApuesta, @Num_8)
 				END
-				IF @Num_9!=NULL
+				IF @Num_9 IS NOT NULL
 				BEGIN
 					INSERT INTO Numeros (IDApuesta, Valor)
 						VALUES
 						(@IDApuesta, @Num_9)
 				END
-				IF @Num_10!=NULL
+				IF @Num_10 IS NOT NULL
 				BEGIN
 					INSERT INTO Numeros (IDApuesta, Valor)
 						VALUES
 						(@IDApuesta, @Num_10)
 				END
-				IF @Num_11!=NULL
+				IF @Num_11 IS NOT NULL
 				BEGIN
 					INSERT INTO Numeros (IDApuesta, Valor)
 						VALUES

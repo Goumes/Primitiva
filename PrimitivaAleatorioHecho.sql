@@ -413,7 +413,7 @@ AS
 				-- El carry Goumes da luz verde, pero con una pequeña modificación.
 				-- Fran jugó lee sin support.
 				--!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				--!!!!!!!! ESTO ESTA MAL, solo mete apuestas de 5 !!!!!!!!!!!
+				--!!!!!!!! ESTO ESTA MAL, solo mete apuestas de 5 !!!!!!!!!!! -> Ya va no problem
 				--!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 				INSERT INTO Numeros (IDApuesta,	Valor)
 					VALUES
@@ -550,8 +550,8 @@ END
 GO
 
 -- PROCEDIMIENTOS DE RECOLECCION DE APUESTAS
-CREATE PROCEDURE RecoleccionApuestasSencillas (@fechaSorteo DATETIME)
-	AS
+CREATE FUNCTION RecoleccionApuestasSencillas (@fechaSorteo DATETIME)
+RETURNS INT	AS
 		BEGIN
 			DECLARE @totalSencillas INT
 			SET @totalSencillas=0
@@ -559,13 +559,13 @@ CREATE PROCEDURE RecoleccionApuestasSencillas (@fechaSorteo DATETIME)
 			SET @totalSencillas = (SELECT COUNT (*)
 								FROM Apuestas
 								WHERE Tipo = 0 AND Estado = 1)
-			PRINT @totalSencillas
+			RETURN @totalSencillas
 		END
 	GO
 
-
-CREATE PROCEDURE RecoleccionApuestasMultiples (@fechaSorteo DATETIME)
-	AS
+	
+CREATE FUNCTION RecoleccionApuestasMultiples (@fechaSorteo DATETIME)
+RETURNS INT	AS
 		BEGIN 
 			DECLARE @totalMultiples INT
 			SET @totalMultiples=0
@@ -576,64 +576,75 @@ CREATE PROCEDURE RecoleccionApuestasMultiples (@fechaSorteo DATETIME)
 
 			BEGIN
 
-			SET @numerosApuesta = (SELECT COUNT (*)
-								FROM Apuestas AS A
-								WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
-																	FROM Numeros AS N WHERE A.ID=N.IDApuesta)=5
-								)
+				SET @numerosApuesta = (SELECT COUNT (*)
+									FROM Apuestas AS A
+									WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
+																		FROM Numeros AS N WHERE A.ID=N.IDApuesta)=5
+									)
 
-			SET @totalMultiples += @numerosApuesta * 44
+				SET @totalMultiples += @numerosApuesta * 44
 
-			SET @numerosApuesta = (SELECT COUNT (*)
-								FROM Apuestas AS A
-								WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
-																	FROM Numeros AS N WHERE A.ID=N.IDApuesta)=7
-								)
-			SET @totalMultiples += @numerosApuesta * 7
-
-
-			SET @numerosApuesta = (SELECT COUNT (*)
-								FROM Apuestas AS A
-								WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
-																	FROM Numeros AS N WHERE A.ID=N.IDApuesta)=8
-								)
-			SET @totalMultiples += @numerosApuesta * 28
+				SET @numerosApuesta = (SELECT COUNT (*)
+									FROM Apuestas AS A
+									WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
+																		FROM Numeros AS N WHERE A.ID=N.IDApuesta)=7
+									)
+				SET @totalMultiples += @numerosApuesta * 7
 
 
-			SET @numerosApuesta = (SELECT COUNT (*)
-								FROM Apuestas AS A
-								WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
-																	FROM Numeros AS N WHERE A.ID=N.IDApuesta)=9
-								)
-			SET @totalMultiples += @numerosApuesta * 84
+				SET @numerosApuesta = (SELECT COUNT (*)
+									FROM Apuestas AS A
+									WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
+																		FROM Numeros AS N WHERE A.ID=N.IDApuesta)=8
+									)
+				SET @totalMultiples += @numerosApuesta * 28
 
 
-			SET @numerosApuesta = (SELECT COUNT (*)
-								FROM Apuestas AS A
-								WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
-																	FROM Numeros AS N WHERE A.ID=N.IDApuesta)=10
-								)
-			SET @totalMultiples += @numerosApuesta * 210
+				SET @numerosApuesta = (SELECT COUNT (*)
+									FROM Apuestas AS A
+									WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
+																		FROM Numeros AS N WHERE A.ID=N.IDApuesta)=9
+									)
+				SET @totalMultiples += @numerosApuesta * 84
 
 
-			SET @numerosApuesta = (SELECT COUNT (*)
-								FROM Apuestas AS A
-								WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
-																	FROM Numeros AS N WHERE A.ID=N.IDApuesta)=11
-								)
-			SET @totalMultiples += @numerosApuesta * 462
+				SET @numerosApuesta = (SELECT COUNT (*)
+									FROM Apuestas AS A
+									WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
+																		FROM Numeros AS N WHERE A.ID=N.IDApuesta)=10
+									)
+				SET @totalMultiples += @numerosApuesta * 210
 
 
-		END
-				PRINT @totalMultiples
+				SET @numerosApuesta = (SELECT COUNT (*)
+									FROM Apuestas AS A
+									WHERE Tipo = 1 AND Estado = 1 AND (SELECT COUNT (*)
+																		FROM Numeros AS N WHERE A.ID=N.IDApuesta)=11
+									)
+				SET @totalMultiples += @numerosApuesta * 462
 
-				RETURN @totalMultiples
+
+			END
+			RETURN @totalMultiples
 				
 		END
 
 	GO
 
+CREATE PROCEDURE PremioPorCategoria (@fechaSorteo DATETIME)
+AS
+	BEGIN
+		DECLARE @TotalRecaudado INT
+		SET @TotalRecaudado = (SELECT dbo.RecoleccionApuestasMultiples (@fechaSorteo)) + (SELECT dbo.RecoleccionApuestasSencillas (@fechaSorteo))
+	
+		SET @TotalRecaudado = @TotalRecaudado*55/100
 
+		INSERT INTO Premios (FechaSorteo, Categoria1, Categoria2, Categoria3, Categoria4, Categoria5, CategoriaE)
+		VALUES
+		(@fechaSorteo, @TotalRecaudado * 0.4, @TotalRecaudado * 0.06, @TotalRecaudado * 0.13, @TotalRecaudado * 0.21, NULL, @TotalRecaudado * 0.2)
+	END
+
+	GO
 
 -- COMIENZO PRUEBAS
 BEGIN TRANSACTION
@@ -657,10 +668,10 @@ BEGIN TRANSACTION
 
 INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
-('17-10-2017 15:34:09', 4, 5)
+('19-10-2017 15:34:09', 4, 5)
 
 INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
-VALUES (1, '17-10-2017 15:34:09', 4)
+VALUES (1, '19-10-2017 15:34:09', 4)
 
 INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
 VALUES (1, 1, 0)
@@ -679,15 +690,15 @@ SET Estado = 1
 WHERE ID = 1
 
 GO
+EXECUTE GrabaMuchasSencillas '19-10-2017 15:34:09', 100000 -- Probando caso correcto
 
-EXECUTE GrabaMuchasSencillas '17-10-2017 15:34:09', 10000 -- Probando caso correcto
 
 
 /* PRUEBAS RECOLECCION DE RECAUDACION MANILLA*/
 
-EXECUTE RecoleccionApuestasMultiples '17-10-2017 15:34:09'
+EXECUTE RecoleccionApuestasMultiples '19-10-2017 15:34:09'
 
-EXECUTE GrabaMultiple '17-10-2017 15:34:09',1,2,3,4,5,6,7,8,9
+EXECUTE GrabaMultiple '19-10-2017 15:34:09',1,2,3,4,5,6,7,8,9,10,11
 
 INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES

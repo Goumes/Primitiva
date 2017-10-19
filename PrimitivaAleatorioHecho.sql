@@ -80,6 +80,7 @@ CREATE TABLE Premios
 	Categoria4 MONEY NOT NULL,
 	Categoria5 MONEY NOT NULL,
 	CategoriaE MONEY NOT NULL,
+	Reintegro MONEY NULL
 
 	
 	CONSTRAINT PK_Premios PRIMARY KEY (FechaSorteo)
@@ -344,19 +345,6 @@ AS
 		END
 	END
 
-
-GO
-
-/* ESTO QUE EH?! (Javi) */
-CREATE PROCEDURE GrabarBoletos (@IDSorteo DATETIME, @numeroBoletos INT)
-AS
-	BEGIN
-		DECLARE @i INT = 0
-		WHILE (@i < @numeroBoletos)
-		BEGIN
-			INSERT INTO Boletos (FechaSorteo)
-	END
-	
 
 GO
 
@@ -637,15 +625,70 @@ AS
 		DECLARE @TotalRecaudado INT
 		SET @TotalRecaudado = (SELECT dbo.RecoleccionApuestasMultiples (@fechaSorteo)) + (SELECT dbo.RecoleccionApuestasSencillas (@fechaSorteo))
 	
-		SET @TotalRecaudado = @TotalRecaudado*55/100
+		SET @TotalRecaudado = @TotalRecaudado*45/100
 
 		INSERT INTO Premios (FechaSorteo, Categoria1, Categoria2, Categoria3, Categoria4, Categoria5, CategoriaE)
 		VALUES
-		(@fechaSorteo, @TotalRecaudado * 0.4, @TotalRecaudado * 0.06, @TotalRecaudado * 0.13, @TotalRecaudado * 0.21, NULL, @TotalRecaudado * 0.2)
+		(@fechaSorteo, @TotalRecaudado * 0.4, @TotalRecaudado * 0.06, @TotalRecaudado * 0.13, @TotalRecaudado * 0.21, 8, @TotalRecaudado * 0.2)
 	END
 
 	GO
 
+
+	--HACER SELECT PARA COMPROBAR NUMEROS ACERTADOS (CON UN "IN")
+
+	--HACER SELECT PARA COMPROBAR REINTEGRO
+
+	-- HACER SELECT PARA COMPROBAR COMPLEMENTARIO
+
+	-- HORRENDO, ARREGLAR. NO DEVUELVE TODAS LAS APUESTAS, NI EL ID DE LA APUESTA, NI NADA. COÑO.
+
+CREATE FUNCTION Ganadores (@fechaSorteo DATETIME)
+RETURNS INT AS
+	BEGIN
+		DECLARE @resultado INT = 0
+
+		IF(CURRENT_TIMESTAMP > @fechaSorteo OR (DATEDIFF (MINUTE, CURRENT_TIMESTAMP, @fechaSorteo) <= 60))
+		BEGIN
+
+			DECLARE @IDApuesta BIGINT
+			DECLARE cursorApuestas CURSOR
+			FOR
+			SELECT A.ID
+			FROM Apuestas AS A
+			INNER JOIN
+			Boletos AS B
+			ON A.ID_Boleto = B.ID
+			WHERE B.FechaSorteo = @fechaSorteo
+
+			OPEN cursorApuestas
+			FETCH NEXT FROM cursorApuestas INTO @IDApuesta
+
+			WHILE @@FETCH_STATUS = 0
+			BEGIN
+			IF EXISTS (
+				SELECT Valor
+				FROM Numeros
+				WHERE IDApuesta = @IDApuesta AND Valor IN (SELECT Valor
+															FROM NumerosSorteo
+															WHERE FechaSorteo = @fechaSorteo))
+				BEGIN
+					SELECT @resultado = COUNT (Valor)
+					FROM Numeros
+					WHERE IDApuesta = @IDApuesta AND Valor IN  (SELECT Valor
+																	FROM NumerosSorteo
+																	WHERE FechaSorteo = @fechaSorteo)
+
+				 END
+			END
+
+			
+
+		END
+		RETURN @resultado
+	END
+
+	GO
 -- COMIENZO PRUEBAS
 BEGIN TRANSACTION
 

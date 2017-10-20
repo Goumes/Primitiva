@@ -106,7 +106,13 @@ CREATE TABLE Aciertos
 ) 
 
 GO
-
+/*
+Resumen: Restriccion a la entrada de un boleto fuera de tiempo
+Precondiciones: Insert de boleto creado
+Entrada: El insert de boleto
+Salida: En caso correcto inserta el boleto, en caso incorrecto hace rollback
+Postcondiciones: El boleto queda insertado o no
+*/
 CREATE TRIGGER HoraRestante ON Boletos
 AFTER INSERT AS
 BEGIN
@@ -189,7 +195,13 @@ VALUES
 
 GO
 
-
+/*
+Resumen: No permite modificar los numeros de una apuesta
+Precondiciones: Que haya numeros
+Entrada: Actualizacion de tabla Numeros
+Salida: Rollback
+Postcondiciones: No se actualiza la tabla Numeros
+*/
 CREATE TRIGGER NoModificar ON Numeros
 AFTER UPDATE AS
 BEGIN
@@ -201,26 +213,14 @@ END
 
 GO
 
+
+
 /*
-CREATE FUNCTION ComprobarDisponibilidad (@FechaSorteo DATETIME)
-RETURNS BIT AS
-
-	BEGIN
-		DECLARE @Resultado BIT
-		SET @Resultado = 0
-
-		IF EXISTS (SELECT *
-					FROM Sorteos
-					WHERE Fecha = @FechaSorteo) --AND DATEDIFF (MINUTE, @FechaSorteo, CURRENT_TIMESTAMP) > 60)
-
-					BEGIN
-						SET @Resultado = 1
-					END
-
-		RETURN @Resultado
-	END
-
-GO
+Resumen: Crea un boleto y graba en el una apuesta sencilla
+Precondiciones: Nada
+Entrada: La fecha del sorteo y los 6 numeros de la apuesta
+Salida: El boleto y la apuesta creada
+Postcondiciones: Boleto creado correctamente si no hay un error en los numeros
 */
 
 CREATE PROCEDURE GrabaSencilla
@@ -268,13 +268,13 @@ AS
 
 GO
 
---De momento genera bien los 6 numeros sin repetirse pero no los introduce bien en la tabla numeros
-
---LO DE ABAJO ESTA SOLUCIONADO, SE SUPONE QUE EL PROCEDURE YA VA PERFECTO
-
---!!!!!!!!!!!!!COÑO LA TABLA TEMPORAL DE NUMEROS NO SE BORRA, PRIMERO SE METEN 6, DESPUES 12, 
---!!!!!!!!!!!!!DESPUES 18 ETCETCETC HAY QUE BORRARLA DESPUES DE CADA INSERT EN APUESTA
---!!ª!!!!!!ª·ª"qwahser&·w%&j$%"jk&i·%%&j%%tykstjaerjyhkaWKRHASERKETYKEWR
+/*
+Resumen: Graba una apuesta sencilla generada aleatoriamente en un boleto
+Precondiciones: Nada
+Entrada: Fecha del sorteo y la cantidad de apuestas que quieres crear (se genera un boleto por cada apuesta)
+Salida: Todos los boletos con las apuestas generadas aleatoriamente
+Postcondiciones: Todas las apuestas quedan grabadas en la base de datos
+*/
 CREATE PROCEDURE GrabaSencillaAleatoria (@fechaSorteo DATETIME, @numeroApuestas TINYINT)
 AS
 	BEGIN
@@ -323,11 +323,11 @@ AS
 						SET @iteraciones2+=1
 					END
 				END
-				--SELECT * FROM @tablaNumeros
+				
 				
 				INSERT INTO Numeros (IDApuesta, Valor)
 				SELECT @IDApuesta, Numero from @tablaNumeros 
-				--(SELECT Numero, @IDApuesta FROM @tablaNumeros) La variable tabla tablaNumeros no tiene IDApuesta
+
 				DELETE @tablaNumeros
 				
 				
@@ -347,6 +347,14 @@ AS
 
 
 GO
+
+/*
+Resumen: 
+Precondiciones: 
+Entrada: 
+Salida: 
+Postcondiciones:
+*/
 
 CREATE PROCEDURE GrabaMuchasSencillas (@fechaSorteo DATETIME, @numeroBoletos INT)
 AS
@@ -635,21 +643,21 @@ AS
 	GO
 
 
-	--HACER SELECT PARA COMPROBAR NUMEROS ACERTADOS (CON UN "IN")
+	--HACER SELECT PARA COMPROBAR NUMEROS ACERTADOS (CON UN "IN") -----HACIECHO
 
 	--HACER SELECT PARA COMPROBAR REINTEGRO
 
 	-- HACER SELECT PARA COMPROBAR COMPLEMENTARIO
 
-	-- HORRENDO, ARREGLAR. NO DEVUELVE TODAS LAS APUESTAS, NI EL ID DE LA APUESTA, NI NADA. COÑO.
-
 CREATE FUNCTION Ganadores (@fechaSorteo DATETIME)
-RETURNS INT AS
+RETURNS @tabla TABLE  (IDApuesta INT, numerosAcertados INT)
+AS
 	BEGIN
 		DECLARE @resultado INT = 0
+		DECLARE @numerosAcertados INT = 0
 
-		IF(CURRENT_TIMESTAMP > @fechaSorteo OR (DATEDIFF (MINUTE, CURRENT_TIMESTAMP, @fechaSorteo) <= 60))
-		BEGIN
+		--IF(CURRENT_TIMESTAMP > @fechaSorteo OR (DATEDIFF (MINUTE, CURRENT_TIMESTAMP, @fechaSorteo) <= 60))
+		--BEGIN
 
 			DECLARE @IDApuesta BIGINT
 			DECLARE cursorApuestas CURSOR
@@ -673,20 +681,35 @@ RETURNS INT AS
 															FROM NumerosSorteo
 															WHERE FechaSorteo = @fechaSorteo))
 				BEGIN
-					SELECT @resultado = COUNT (Valor)
-					FROM Numeros
-					WHERE IDApuesta = @IDApuesta AND Valor IN  (SELECT Valor
+
+					IF ((SELECT COUNT (Valor)
+						FROM Numeros
+						WHERE IDApuesta = @IDApuesta AND Valor IN  (SELECT Valor
+																	FROM NumerosSorteo
+																	WHERE FechaSorteo = @fechaSorteo)) > 0)
+					BEGIN
+
+						SELECT @numerosAcertados = COUNT (Valor)
+						FROM Numeros
+						WHERE IDApuesta = @IDApuesta AND Valor IN  (SELECT Valor
 																	FROM NumerosSorteo
 																	WHERE FechaSorteo = @fechaSorteo)
 
+
+						INSERT INTO @tabla (IDApuesta, numerosAcertados)
+						VALUES (@IDApuesta, @numerosAcertados)
+					END
 				 END
+				 FETCH NEXT FROM cursorApuestas INTO @IDApuesta
 			END
 
 			
 
-		END
-		RETURN @resultado
+		--END
+
+		RETURN
 	END
+
 
 	GO
 -- COMIENZO PRUEBAS

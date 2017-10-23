@@ -1,4 +1,11 @@
 
+Premio total de cada acertante
+Asignar reintegro
+Contar ganadores
+Comprobar ganadores
+
+
+
 
 
 TAREAS:

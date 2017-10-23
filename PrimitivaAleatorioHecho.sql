@@ -349,11 +349,11 @@ AS
 GO
 
 /*
-Resumen: 
-Precondiciones: 
-Entrada: 
-Salida: 
-Postcondiciones:
+Resumen: Graba un numero indeterminado de apuestas aleatorias, una por boleto
+Precondiciones: El procedimiento GrabaSencillaAleatoria debe estar implementado
+Entrada: fecha del sorteo, cantidad de apuestas
+Salida: numero de boletos y apuestas introducidas
+Postcondiciones: Las apuestas quedan grabadas en la base de datos
 */
 
 CREATE PROCEDURE GrabaMuchasSencillas (@fechaSorteo DATETIME, @numeroBoletos INT)
@@ -370,6 +370,13 @@ END
 
 	GO
 
+/*
+Resumen: Graba una apuesta multiple, de 5 a 11 numeros, en un nuevo boleto
+Precondiciones: Nada
+Entrada: fecha sorteo, numeros de la apuesta (5-11)
+Salida: boleto generado
+Postcondiciones: La apuesta multiple queda grabada en la base de datos
+*/
 CREATE PROCEDURE GrabaMultiple
 	@FechaSorteo DATETIME,
 	@Num_1 TINYINT,
@@ -469,6 +476,11 @@ GO
 -- Empieza la tralla del martes tarde
 -- Si después de modificar una apuesta a estado cerrada no tiene 6 numeros, hacer rollback y dejar el estado a en proceso.
 
+/*
+Resumen: Comprueba que la apuesta sencilla tenga 6 numeros
+Precondiciones: Se inserta una apuesta simple en el sistema
+Postcondiciones: Si tiene mas o menos de 6 numeros, hace rollback
+*/
 CREATE TRIGGER numeroApuestaSencilla ON Apuestas
 AFTER UPDATE AS
 BEGIN
@@ -497,6 +509,12 @@ END
 GO
 
 --Lo mismo pero para multiple
+/*
+Resumen: Comprueba que las apuestas múltiples tengan entre 5 y 11 números, pero no 6
+Precondiciones: Se inserta una apuesta multiple en el sistema
+Postcondiciones: Si la cantidad de números de la apuesta es erróneo, hace rollback
+*/
+
 CREATE TRIGGER numeroApuestaMultiple ON Apuestas
 AFTER UPDATE AS
 BEGIN
@@ -528,6 +546,11 @@ END
 
 GO
 
+/*
+Resumen: Comprueba que en un boleto solo haya una apuesta múltiple
+Precondiciones: Se inserta un boleto en el sistema
+Postcondiciones: Si el boleto contiene más de una apuesta múltiple, hace rollback
+*/
 CREATE TRIGGER NumeroApuestasPorBoleto ON Apuestas
 AFTER INSERT AS
 BEGIN
@@ -546,6 +569,13 @@ END
 GO
 
 -- PROCEDIMIENTOS DE RECOLECCION DE APUESTAS
+/*
+Resumen: Cuenta cuántas apuestas sencillas hay en un sorteo
+Precondiciones: El sorteo existe
+Entrada: fecha del sorteo
+Salida: cantidad de apuestas sencillas en el sorteo
+Postcondiciones: Devuelve la cantidad de apuestas sencillas en el sorteo
+*/
 CREATE FUNCTION RecoleccionApuestasSencillas (@fechaSorteo DATETIME)
 RETURNS INT	AS
 		BEGIN
@@ -559,7 +589,13 @@ RETURNS INT	AS
 		END
 	GO
 
-	
+/*
+Resumen: Cuenta cuántas apuestas múltiples hay en un sorteo
+Precondiciones: El sorteo existe
+Entrada: fecha del sorteo
+Salida: cantidad de apuestas múltiples en el sorteo
+Postcondiciones: Devuelve la cantidad de apuestas múltiples en el sorteo
+*/
 CREATE FUNCTION RecoleccionApuestasMultiples (@fechaSorteo DATETIME)
 RETURNS INT	AS
 		BEGIN 
@@ -627,6 +663,13 @@ RETURNS INT	AS
 
 	GO
 
+/*
+Resumen: Calcula los fondos totales destinados a cada categoria del sorteo
+Precondiciones: El sorteo existe
+Entrada: fecha del sorteo
+Salida: Premio para cada categoría
+Postcondiciones: Inserta en la tabla premios el total destinado a cada categoría
+*/
 CREATE PROCEDURE PremioPorCategoria (@fechaSorteo DATETIME)
 AS
 	BEGIN
@@ -649,6 +692,13 @@ AS
 
 	-- HACER SELECT PARA COMPROBAR COMPLEMENTARIO
 
+/*
+Resumen: Comprueba los ganadores en cada categoría del sorteo
+Precondiciones: El sorteo existe
+Entrada: fecha del sorteo
+Salida: Los ganadores en cada categoría
+Postcondiciones: Devuelve los ganadores que hay por categoría
+*/
 CREATE FUNCTION Ganadores (@fechaSorteo DATETIME)
 RETURNS @tabla TABLE  (IDApuesta INT, numerosAcertados INT)
 AS
@@ -710,6 +760,62 @@ AS
 		RETURN
 	END
 
+	GO
+
+	CREATE FUNCTION cantidadPremios (@FechaSorteo DATETIME)
+	RETURNS @Tabla TABLE (Categoria CHAR, Dinero MONEY, Acertantes INT) 
+	AS
+	BEGIN
+
+	/*
+		DECLARE @Tabla TABLE (IDApuesta BIGINT, numeroAciertos INT)
+
+		INSERT INTO @Tabla (IDApuesta, numeroAciertos)
+		(SELECT IDApuesta, numerosAcertados FROM dbo.Ganadores (@FechaSorteo))
+	*/
+	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
+
+	(SELECT '1', (SELECT Categoria1 FROM Premios)/COUNT(numerosAcertados), COUNT (numerosAcertados)
+		FROM dbo.Ganadores (@FechaSorteo)
+		GROUP BY IDApuesta
+		HAVING COUNT (numerosAcertados) = 6)
+
+
+	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
+
+	(SELECT '2', (SELECT Categoria2 FROM Premios)/COUNT(numerosAcertados), COUNT (numerosAcertados)
+		FROM dbo.Ganadores (@FechaSorteo)
+		GROUP BY IDApuesta
+		HAVING COUNT (numerosAcertados) = 5 )-- + C
+
+	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
+
+	(SELECT '3', (SELECT Categoria3 FROM Premios)/COUNT(numerosAcertados), COUNT (numerosAcertados)
+		FROM dbo.Ganadores (@FechaSorteo)
+		GROUP BY IDApuesta
+		HAVING COUNT (numerosAcertados) = 5 )
+
+	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
+
+	(SELECT '4', (SELECT Categoria4 FROM Premios)/COUNT(numerosAcertados), COUNT (numerosAcertados)
+		FROM dbo.Ganadores (@FechaSorteo)
+		GROUP BY IDApuesta
+		HAVING COUNT (numerosAcertados) = 4 )
+
+	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
+
+	(SELECT '5', (SELECT Categoria5 FROM Premios)/COUNT(numerosAcertados), COUNT (numerosAcertados)
+		FROM dbo.Ganadores (@FechaSorteo)
+		GROUP BY IDApuesta
+		HAVING COUNT (numerosAcertados) = 3 )
+
+
+		-- Falta la categoria Especial
+
+
+		RETURN
+		
+	END
 
 	GO
 -- COMIENZO PRUEBAS

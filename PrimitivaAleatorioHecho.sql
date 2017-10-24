@@ -83,7 +83,8 @@ CREATE TABLE Premios
 	Reintegro MONEY NULL
 
 	
-	CONSTRAINT PK_Premios PRIMARY KEY (FechaSorteo)
+	CONSTRAINT PK_Premios PRIMARY KEY (FechaSorteo),
+	CONSTRAINT FK_Premios_Sorteos FOREIGN KEY (FechaSorteo) REFERENCES Sorteos (Fecha) ON UPDATE CASCADE ON DELETE CASCADE
 
 )
 
@@ -314,7 +315,7 @@ AS
 				
 				WHILE(@iteraciones2<6)
 				BEGIN
-					SET @numeroRandom = RAND () * (49) + 1
+					SET @numeroRandom = FLOOR (RAND () * (49) + 1)
 					IF (@numeroRandom not in (SELECT * FROM @tablaNumeros))
 					BEGIN
 						INSERT INTO @tablaNumeros(Numero)
@@ -341,7 +342,7 @@ AS
 		END
 		ELSE
 		BEGIN
-			Print 'NEIN'
+			Print 'NEIN' -- Poner un RaiseError y esas cosas
 		END
 	END
 
@@ -400,7 +401,7 @@ AS
 									FROM Apuestas)
 				INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
 					VALUES
-					(@IDBoleto, @FechaSorteo, RAND () * 10)
+					(@IDBoleto, @FechaSorteo,FLOOR (RAND () * 10))
 
 				INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
 					VALUES
@@ -773,42 +774,77 @@ AS
 		INSERT INTO @Tabla (IDApuesta, numeroAciertos)
 		(SELECT IDApuesta, numerosAcertados FROM dbo.Ganadores (@FechaSorteo))
 	*/
-	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
 
-	(SELECT '1', (SELECT Categoria1 FROM Premios)/COUNT(numerosAcertados), COUNT (numerosAcertados)
-		FROM dbo.Ganadores (@FechaSorteo)
-		GROUP BY IDApuesta
-		HAVING COUNT (numerosAcertados) = 6)
+	IF  ((SELECT COUNT (IDApuesta)
+			FROM dbo.Ganadores ('26-10-2017 15:34:09')
+			WHERE numerosAcertados = 6) > 0)
+	BEGIN
+	
 
+		INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
 
-	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
+		(SELECT '1', (SELECT Categoria1 FROM Premios)/(COUNT (IDApuesta)), COUNT (IDApuesta)
+			FROM dbo.Ganadores (@FechaSorteo)
+				WHERE numerosAcertados = 6)
 
-	(SELECT '2', (SELECT Categoria2 FROM Premios)/COUNT(numerosAcertados), COUNT (numerosAcertados)
-		FROM dbo.Ganadores (@FechaSorteo)
-		GROUP BY IDApuesta
-		HAVING COUNT (numerosAcertados) = 5 )-- + C
+	END
 
-	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
-
-	(SELECT '3', (SELECT Categoria3 FROM Premios)/COUNT(numerosAcertados), COUNT (numerosAcertados)
-		FROM dbo.Ganadores (@FechaSorteo)
-		GROUP BY IDApuesta
-		HAVING COUNT (numerosAcertados) = 5 )
-
-	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
-
-	(SELECT '4', (SELECT Categoria4 FROM Premios)/COUNT(numerosAcertados), COUNT (numerosAcertados)
-		FROM dbo.Ganadores (@FechaSorteo)
-		GROUP BY IDApuesta
-		HAVING COUNT (numerosAcertados) = 4 )
+	IF ((SELECT COUNT (IDApuesta)
+			FROM dbo.Ganadores (@FechaSorteo)
+			WHERE numerosAcertados = 5) > 0) -- y C
+	BEGIN
+	
 
 	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
 
-	(SELECT '5', (SELECT Categoria5 FROM Premios)/COUNT(numerosAcertados), COUNT (numerosAcertados)
+	(SELECT '2', (SELECT Categoria2 FROM Premios)/(COUNT (IDApuesta)), COUNT (IDApuesta)
 		FROM dbo.Ganadores (@FechaSorteo)
-		GROUP BY IDApuesta
-		HAVING COUNT (numerosAcertados) = 3 )
+		 WHERE numerosAcertados = 5)-- + C
 
+	END
+
+
+	IF ((SELECT COUNT (IDApuesta)
+			FROM dbo.Ganadores (@FechaSorteo)
+			WHERE numerosAcertados = 5) > 0)
+	BEGIN
+	
+
+	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
+
+	(SELECT '3', (SELECT Categoria3 FROM Premios)/(COUNT (IDApuesta)), COUNT (IDApuesta)
+		FROM dbo.Ganadores (@FechaSorteo)
+		 WHERE numerosAcertados = 5)
+
+
+	END
+
+	IF ((SELECT COUNT (IDApuesta)
+			FROM dbo.Ganadores (@FechaSorteo)
+			WHERE numerosAcertados = 4) > 0)
+	BEGIN
+	
+	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
+
+	(SELECT '4', (SELECT Categoria4 FROM Premios)/(COUNT (IDApuesta)), COUNT (IDApuesta)
+		FROM dbo.Ganadores (@FechaSorteo)
+		 WHERE numerosAcertados = 4)
+
+	END
+
+	IF ((SELECT COUNT (IDApuesta)
+			FROM dbo.Ganadores (@FechaSorteo)
+			WHERE numerosAcertados = 3) > 0)
+	BEGIN
+	
+
+	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
+
+	(SELECT '5', '8', COUNT (IDApuesta)
+		FROM dbo.Ganadores (@FechaSorteo)
+		 WHERE numerosAcertados = 3)
+
+	END
 
 		-- Falta la categoria Especial
 
@@ -840,10 +876,10 @@ BEGIN TRANSACTION
 
 INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
-('19-10-2017 15:34:09', 4, 5)
+('26-10-2017 15:34:09', 4, 5)
 
 INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
-VALUES (1, '19-10-2017 15:34:09', 4)
+VALUES (1, '26-10-2017 15:34:09', 4)
 
 INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
 VALUES (1, 1, 0)
@@ -862,7 +898,7 @@ SET Estado = 1
 WHERE ID = 1
 
 GO
-EXECUTE GrabaMuchasSencillas '19-10-2017 15:34:09', 100000 -- Probando caso correcto
+EXECUTE GrabaMuchasSencillas '26-10-2017 15:34:09', 10000 -- Probando caso correcto
 
 
 
@@ -895,6 +931,7 @@ SET Estado = 1
 
 /*FIN PRUEBAS RECOLECCION */
 
+EXECUTE PremioPorCategoria '26-10-2017 15:34:09'
 
 
 SELECT * 
@@ -917,11 +954,17 @@ ROLLBACK
 
 COMMIT TRANSACTION
 
+SELECT *
+FROM dbo.cantidadPremios ('26-10-2017 15:34:09')
+
+SELECT *
+FROM dbo.cantidadPremios ('26-10-2017 15:34:09')
+
  -- FIN PRUEBAS
 
 BEGIN TRANSACTION
 
-INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
+INSERT INTO Sorteos (Fecha, Reintegro, Complementario)
 VALUES
 ('18-06-2015 13:34:09', 4, 5)
 EXECUTE GrabaSencillaAleatoria '18-06-2015 13:34:09',8
@@ -958,12 +1001,12 @@ VALUES
 
 INSERT INTO NumerosSorteo (Valor, FechaSorteo)
 VALUES
-(45, '18-06-2012 13:34:09'),
-(3, '18-06-2012 13:34:09'),
-(14, '18-06-2012 13:34:09'),
-(43, '18-06-2012 13:34:09'),
-(12, '18-06-2012 13:34:09'),
-(35, '18-06-2012 13:34:09')
+(45, '26-10-2017 15:34:09'),
+(3, '26-10-2017 15:34:09'),
+(14, '26-10-2017 15:34:09'),
+(43, '26-10-2017 15:34:09'),
+(12, '26-10-2017 15:34:09'),
+(35, '26-10-2017 15:34:09')
 
 
 --DECLARE @ID UNIQUEIDENTIFIER = NEWID ()

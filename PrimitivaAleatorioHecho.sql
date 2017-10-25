@@ -1,6 +1,6 @@
 CREATE DATABASE Primitiva
 
---DROP DATABASE Primitiva
+--use master DROP DATABASE Primitiva
 --ROLLBACK
 
 GO
@@ -13,7 +13,7 @@ CREATE TABLE Sorteos
 (
 	Fecha DATETIME NOT NULL,
 	Reintegro TINYINT NOT NULL,
-	Complementario TINYINT NOT NULL,
+	Complementario TINYINT NULL,
 
 	CONSTRAINT PK_Sorteos PRIMARY KEY (Fecha)
 )
@@ -344,6 +344,60 @@ AS
 		BEGIN
 			Print 'NEIN' -- Poner un RaiseError y esas cosas
 		END
+	END
+
+
+GO
+
+
+/*
+Resumen: Genera los numeros del sorteo y el complementario y los inserta en sus correspondientes tablas
+Precondiciones: Nada
+Entrada: Fecha del sorteo
+Salida: Los numeros del sorteo y el complementario
+Postcondiciones: Los numeros y el complementario quedan grabados en la base de datos
+*/
+CREATE PROCEDURE GeneraNumerosSorteo (@fechaSorteo DATETIME) -- POR ALGUM MOTIVO NO INSERTA NA EN NINGUN LADO
+AS
+	BEGIN			
+		DECLARE @tablaNumeros TABLE(
+		Numero TINYINT
+		)
+
+		DECLARE @iteraciones2 TINYINT
+		DECLARE @numeroRandom TINYINT
+		DECLARE @complementario TINYINT
+
+		WHILE(@iteraciones2<7)
+		BEGIN
+			
+			SET @numeroRandom = RAND () * (49) + 1
+			IF (@numeroRandom not in (SELECT * FROM @tablaNumeros))
+				BEGIN
+				IF (@iteraciones2<6)
+				BEGIN
+					INSERT INTO @tablaNumeros(Numero)
+					VALUES
+					(@numeroRandom)
+					SET @iteraciones2+=1
+				END
+				ELSE
+				BEGIN
+					SET @complementario = @numeroRandom
+					SET @iteraciones2+=1
+				END
+			END
+		END
+				
+				
+		INSERT INTO NumerosSorteo(FechaSorteo, Valor)
+		SELECT @fechaSorteo, Numero from @tablaNumeros 
+
+		UPDATE Sorteos
+		SET Complementario = @complementario
+		WHERE Fecha = @fechaSorteo
+
+		DELETE @tablaNumeros
 	END
 
 
@@ -878,6 +932,8 @@ INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
 ('26-10-2017 15:34:09', 4, 5)
 
+EXECUTE GeneraNumerosSorteo '26-10-2017 15:34:09'
+
 INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
 VALUES (1, '26-10-2017 15:34:09', 4)
 
@@ -949,6 +1005,9 @@ ORDER BY IDApuesta
 
 SELECT *
 FROM Aciertos
+
+SELECT *
+FROM NumerosSorteo
 
 ROLLBACK
 

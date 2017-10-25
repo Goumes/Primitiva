@@ -357,7 +357,7 @@ Entrada: Fecha del sorteo
 Salida: Los numeros del sorteo y el complementario
 Postcondiciones: Los numeros y el complementario quedan grabados en la base de datos
 */
-CREATE PROCEDURE GeneraNumerosSorteo (@fechaSorteo DATETIME) -- POR ALGUM MOTIVO NO INSERTA NA EN NINGUN LADO
+ALTER PROCEDURE GeneraNumerosSorteo (@fechaSorteo DATETIME) -- POR ALGUM MOTIVO NO INSERTA NA EN NINGUN LADO
 AS
 	BEGIN			
 		DECLARE @tablaNumeros TABLE(
@@ -365,6 +365,7 @@ AS
 		)
 
 		DECLARE @iteraciones2 TINYINT
+		SET @iteraciones2 = 0
 		DECLARE @numeroRandom TINYINT
 		DECLARE @complementario TINYINT
 
@@ -930,9 +931,9 @@ BEGIN TRANSACTION
 
 INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
-('26-10-2017 15:34:09', 4, 5)
+('27-10-2017 15:34:09', 4, 5)
 
-EXECUTE GeneraNumerosSorteo '26-10-2017 15:34:09'
+EXECUTE GeneraNumerosSorteo '27-10-2017 15:34:09'
 
 INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
 VALUES (1, '26-10-2017 15:34:09', 4)

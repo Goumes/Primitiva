@@ -357,7 +357,7 @@ Entrada: Fecha del sorteo
 Salida: Los numeros del sorteo y el complementario
 Postcondiciones: Los numeros y el complementario quedan grabados en la base de datos
 */
-ALTER PROCEDURE GeneraNumerosSorteo (@fechaSorteo DATETIME) -- POR ALGUM MOTIVO NO INSERTA NA EN NINGUN LADO
+CREATE PROCEDURE GeneraNumerosSorteo (@fechaSorteo DATETIME) 
 AS
 	BEGIN			
 		DECLARE @tablaNumeros TABLE(
@@ -730,7 +730,7 @@ CREATE PROCEDURE PremioPorCategoria (@fechaSorteo DATETIME)
 AS
 	BEGIN
 		DECLARE @TotalRecaudado INT
-		SET @TotalRecaudado = (SELECT dbo.RecoleccionApuestasMultiples (@fechaSorteo)) + (SELECT dbo.RecoleccionApuestasSencillas (@fechaSorteo))
+		SET @TotalRecaudado = (SELECT dbo.RecoleccionApuestasMultiples ('27-10-2018 15:34:09')) + (SELECT dbo.RecoleccionApuestasSencillas ('27-10-2018 15:34:09'))
 	
 		SET @TotalRecaudado = @TotalRecaudado*45/100
 
@@ -756,7 +756,7 @@ Salida: Los ganadores en cada categoría
 Postcondiciones: Devuelve los ganadores que hay por categoría
 */
 CREATE FUNCTION Ganadores (@fechaSorteo DATETIME)
-RETURNS @tabla TABLE  (IDApuesta INT, numerosAcertados INT)
+RETURNS @tabla TABLE  (IDApuesta INT, numerosAcertados INT, complementario BINARY)
 AS
 	BEGIN
 		DECLARE @resultado INT = 0
@@ -766,6 +766,11 @@ AS
 		--BEGIN
 
 			DECLARE @IDApuesta BIGINT
+			DECLARE @numeroNoAcertado TINYINT
+			DECLARE @complementario BINARY
+			SET @complementario = 0
+			
+
 			DECLARE cursorApuestas CURSOR
 			FOR
 			SELECT A.ID
@@ -800,16 +805,27 @@ AS
 						WHERE IDApuesta = @IDApuesta AND Valor IN  (SELECT Valor
 																	FROM NumerosSorteo
 																	WHERE FechaSorteo = @fechaSorteo)
-
-
-						INSERT INTO @tabla (IDApuesta, numerosAcertados)
-						VALUES (@IDApuesta, @numerosAcertados)
+						
+						IF(@numerosAcertados=5)
+							BEGIN
+								SET @numeroNoAcertado = (SELECT Valor
+								FROM Numeros
+								WHERE IDApuesta = @IDApuesta AND Valor NOT IN (SELECT Valor
+																			FROM NumerosSorteo
+																			WHERE FechaSorteo = @fechaSorteo))
+								IF(@numeroNoAcertado = (SELECT complementario 
+														FROM Sorteos 
+														WHERE Fecha=@fechaSorteo))
+									BEGIN
+										SET @complementario = 1
+									END
+							END
+						INSERT INTO @tabla (IDApuesta, numerosAcertados, complementario)
+						VALUES (@IDApuesta, @numerosAcertados, @complementario)
 					END
 				 END
 				 FETCH NEXT FROM cursorApuestas INTO @IDApuesta
 			END
-
-			
 
 		--END
 
@@ -831,7 +847,7 @@ AS
 	*/
 
 	IF  ((SELECT COUNT (IDApuesta)
-			FROM dbo.Ganadores ('26-10-2017 15:34:09')
+			FROM dbo.Ganadores (@FechaSorteo)
 			WHERE numerosAcertados = 6) > 0)
 	BEGIN
 	
@@ -854,7 +870,7 @@ AS
 
 	(SELECT '2', (SELECT Categoria2 FROM Premios)/(COUNT (IDApuesta)), COUNT (IDApuesta)
 		FROM dbo.Ganadores (@FechaSorteo)
-		 WHERE numerosAcertados = 5)-- + C
+		 WHERE numerosAcertados = 5 AND complementario = 1)-- + C AMO A VE SI ESTO VA ASI DE LOCURA
 
 	END
 
@@ -931,12 +947,12 @@ BEGIN TRANSACTION
 
 INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
-('27-10-2017 15:34:09', 4, 5)
+('27-10-2018 15:34:09', 4, 5)
 
-EXECUTE GeneraNumerosSorteo '27-10-2017 15:34:09'
+EXECUTE GeneraNumerosSorteo '27-10-2018 15:34:09'
 
 INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
-VALUES (1, '26-10-2017 15:34:09', 4)
+VALUES (1, '26-10-2018 15:34:09', 4)
 
 INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
 VALUES (1, 1, 0)
@@ -950,12 +966,27 @@ VALUES
 (1, 5),
 (1, 6)
 
+INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
+VALUES (1, '27-10-2018 15:34:09', 4)
+
+INSERT INTO Apuestas (ID, ID_Boleto, Tipo) -- CREO QUE NO SALE EL DINERO PORQUE LAS APUESTAS ESTAN EN ESTADO 0
+VALUES (1, 1, 0)
+
+INSERT INTO Numeros (IDApuesta, Valor)
+VALUES
+(1, 15),
+(1, 25),
+(1, 33),
+(1, 41),
+(1, 48),
+(1, 8)
+
 UPDATE Apuestas
 SET Estado = 1
 WHERE ID = 1
 
 GO
-EXECUTE GrabaMuchasSencillas '26-10-2017 15:34:09', 10000 -- Probando caso correcto
+EXECUTE GrabaMuchasSencillas '27-10-2017 15:34:09', 10000 -- Probando caso correcto
 
 
 
@@ -1014,11 +1045,11 @@ ROLLBACK
 
 COMMIT TRANSACTION
 
+EXECUTE PremioPorCategoria '27-10-2018 15:34:09'
 SELECT *
-FROM dbo.cantidadPremios ('26-10-2017 15:34:09')
+FROM dbo.cantidadPremios ('27-10-2018 15:34:09')
 
-SELECT *
-FROM dbo.cantidadPremios ('26-10-2017 15:34:09')
+SELECT * FROM 
 
  -- FIN PRUEBAS
 

@@ -756,7 +756,7 @@ Salida: Los ganadores en cada categoría
 Postcondiciones: Devuelve los ganadores que hay por categoría
 */
 CREATE FUNCTION Ganadores (@fechaSorteo DATETIME)
-RETURNS @tabla TABLE  (IDApuesta INT, numerosAcertados INT, complementario BINARY)
+RETURNS @tabla TABLE  (IDApuesta INT, numerosAcertados INT, complementario BIT)
 AS
 	BEGIN
 		DECLARE @resultado INT = 0
@@ -767,7 +767,7 @@ AS
 
 			DECLARE @IDApuesta BIGINT
 			DECLARE @numeroNoAcertado TINYINT
-			DECLARE @complementario BINARY
+			DECLARE @complementario BIT
 			SET @complementario = 0
 			
 
@@ -785,6 +785,7 @@ AS
 
 			WHILE @@FETCH_STATUS = 0
 			BEGIN
+			SET @complementario = 0
 			IF EXISTS (
 				SELECT Valor
 				FROM Numeros
@@ -797,7 +798,7 @@ AS
 						FROM Numeros
 						WHERE IDApuesta = @IDApuesta AND Valor IN  (SELECT Valor
 																	FROM NumerosSorteo
-																	WHERE FechaSorteo = @fechaSorteo)) > 0)
+																	WHERE FechaSorteo = @fechaSorteo)) > 2)
 					BEGIN
 
 						SELECT @numerosAcertados = COUNT (Valor)
@@ -820,6 +821,7 @@ AS
 										SET @complementario = 1
 									END
 							END
+
 						INSERT INTO @tabla (IDApuesta, numerosAcertados, complementario)
 						VALUES (@IDApuesta, @numerosAcertados, @complementario)
 					END
@@ -834,9 +836,9 @@ AS
 
 	GO
 
-	CREATE FUNCTION cantidadPremios (@FechaSorteo DATETIME)
-	RETURNS @Tabla TABLE (Categoria CHAR, Dinero MONEY, Acertantes INT) 
-	AS
+CREATE FUNCTION cantidadPremios (@FechaSorteo DATETIME)
+RETURNS @Tabla TABLE (Categoria CHAR, Dinero MONEY, Acertantes INT) 
+AS
 	BEGIN
 
 	/*
@@ -862,7 +864,7 @@ AS
 
 	IF ((SELECT COUNT (IDApuesta)
 			FROM dbo.Ganadores (@FechaSorteo)
-			WHERE numerosAcertados = 5) > 0) -- y C
+			WHERE numerosAcertados = 5 AND complementario = 1) > 0)
 	BEGIN
 	
 
@@ -877,7 +879,7 @@ AS
 
 	IF ((SELECT COUNT (IDApuesta)
 			FROM dbo.Ganadores (@FechaSorteo)
-			WHERE numerosAcertados = 5) > 0)
+			WHERE numerosAcertados = 5 AND complementario = 0) > 0)
 	BEGIN
 	
 
@@ -952,7 +954,7 @@ VALUES
 EXECUTE GeneraNumerosSorteo '27-10-2018 15:34:09'
 
 INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
-VALUES (1, '26-10-2018 15:34:09', 4)
+VALUES (1, '27-10-2018 15:34:09', 4)
 
 INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
 VALUES (1, 1, 0)
@@ -974,19 +976,19 @@ VALUES (1, 1, 0)
 
 INSERT INTO Numeros (IDApuesta, Valor)
 VALUES
-(1, 15),
-(1, 25),
-(1, 33),
-(1, 41),
-(1, 48),
-(1, 8)
+(1, 7),
+(1, 10),
+(1, 22),
+(1, 23),
+(1, 38),
+(1, 12)
 
 UPDATE Apuestas
 SET Estado = 1
 WHERE ID = 1
 
 GO
-EXECUTE GrabaMuchasSencillas '27-10-2017 15:34:09', 10000 -- Probando caso correcto
+EXECUTE GrabaMuchasSencillas '27-10-2018 15:34:09', 100000 -- Probando caso correcto
 
 
 
@@ -1049,7 +1051,10 @@ EXECUTE PremioPorCategoria '27-10-2018 15:34:09'
 SELECT *
 FROM dbo.cantidadPremios ('27-10-2018 15:34:09')
 
-SELECT * FROM 
+SELECT *
+FROM dbo.Ganadores ('27-10-2018 15:34:09')
+ORDER BY numerosAcertados
+
 
  -- FIN PRUEBAS
 

@@ -25,6 +25,7 @@ CREATE TABLE Boletos
 	ID BIGINT NOT NULL,
 	FechaSorteo DATETIME NOT NULL,
 	Reintegro TINYINT NULL,
+	Premio MONEY NULL,
 
 
 	CONSTRAINT PK_Boletos PRIMARY KEY (ID),
@@ -40,6 +41,7 @@ CREATE TABLE Apuestas
 	ID_Boleto BIGINT NOT NULL,
 	Tipo BIT NOT NULL,
 	Estado BIT NOT NULL DEFAULT 0, -- 1 Completa, 0 no.
+	Premio MONEY NULL,
 
 	CONSTRAINT PK_Apuestas PRIMARY KEY (ID),
 	CONSTRAINT FK_Apuestas_Boletos FOREIGN KEY (ID_Boleto) REFERENCES Boletos (ID) ON UPDATE CASCADE ON DELETE CASCADE
@@ -769,7 +771,6 @@ AS
 			DECLARE @numeroNoAcertado TINYINT
 			DECLARE @complementario BIT
 			SET @complementario = 0
-			
 
 			DECLARE cursorApuestas CURSOR
 			FOR
@@ -785,7 +786,10 @@ AS
 
 			WHILE @@FETCH_STATUS = 0
 			BEGIN
+
 			SET @complementario = 0
+			SET @numerosAcertados = 0
+
 			IF EXISTS (
 				SELECT Valor
 				FROM Numeros
@@ -822,11 +826,12 @@ AS
 									END
 							END
 
-						INSERT INTO @tabla (IDApuesta, numerosAcertados, complementario)
-						VALUES (@IDApuesta, @numerosAcertados, @complementario)
+						
 					END
 				 END
-				 FETCH NEXT FROM cursorApuestas INTO @IDApuesta
+
+				
+				FETCH NEXT FROM cursorApuestas INTO @IDApuesta
 			END
 
 		--END
@@ -927,6 +932,101 @@ AS
 	END
 
 	GO
+
+	CREATE PROCEDURE calcularReintegro (@fechaSorteo DATETIME)
+	AS
+	BEGIN
+		DECLARE @reintegro BIT
+
+		DECLARE @numeroApuestas INT = 0
+		DECLARE @idBoleto INT
+		DECLARE cursorBoletos CURSOR
+		FOR
+		SELECT B.ID
+			FROM Boletos AS B
+			INNER JOIN
+			Apuestas AS A
+			ON B.ID = A.ID_Boleto
+			WHERE FechaSorteo = @fechaSorteo AND A.Estado = 1
+
+		OPEN cursorBoletos
+		FETCH NEXT FROM cursorBoletos INTO @idBoleto
+
+		WHILE @@FETCH_STATUS = 0
+		BEGIN
+
+
+		IF EXISTS((SELECT Reintegro
+						FROM Boletos
+						WHERE Reintegro = (SELECT Reintegro
+											FROM Sorteos
+											WHERE Fecha = @fechaSorteo) AND ID = @idBoleto))
+			BEGIN
+				SET @reintegro = 1
+
+				SELECT @numeroApuestas = COUNT (A.ID)
+					FROM Boletos AS B
+					INNER JOIN
+					Apuestas AS A
+					ON B.ID = A.ID_Boleto
+					WHERE B.ID = @idBoleto
+
+			END
+
+			IF (@reintegro = 1 AND (SELECT Premio FROM Boletos WHERE ID = @idBoleto) = 0) --Esto se hace primero, después se suma el resto.
+			BEGIN
+				UPDATE Boletos
+				SET Premio = @numeroApuestas
+			END
+
+			FETCH NEXT FROM cursorBoletos INTO @idBoleto
+			END
+
+	GO
+
+
+	--Esto de momento es inutil
+
+	CREATE PROCEDURE asignarReintegro (@FechaSorteo DATETIME)
+	AS
+	BEGIN
+		DECLARE @numeroApuestas INT = 0
+		DECLARE @idApuesta INT
+		DECLARE cursorApuestas CURSOR
+		FOR
+		SELECT IDApuesta
+		FROM dbo.Ganadores (@FechaSorteo) 
+		WHERE reintegro = 1
+
+		OPEN cursorApuestas
+		FETCH NEXT FROM cursorApuestas INTO @idApuesta
+
+		WHILE @@FETCH_STATUS = 0
+		BEGIN
+
+		IF EXISTS (SELECT ID
+					FROM Apuestas
+					WHERE Tipo = 0 AND ID = @idApuesta)
+		BEGIN
+		SELECT @numeroApuestas = COUNT (A.ID)
+			FROM Apuestas AS A
+			INNER JOIN
+			Boletos AS B
+			ON B.ID = A.ID_Boleto
+			WHERE A.ID = @idApuesta
+
+			UPDATE Apuestas
+			SET Premio = @numeroApuestas
+			WHERE ID = @idApuesta
+		END
+
+			FETCH NEXT FROM cursorApuestas INTO @idApuesta
+		END
+		
+
+	END
+
+	GO
 -- COMIENZO PRUEBAS
 BEGIN TRANSACTION
 
@@ -988,7 +1088,7 @@ SET Estado = 1
 WHERE ID = 1
 
 GO
-EXECUTE GrabaMuchasSencillas '27-10-2018 15:34:09', 100000 -- Probando caso correcto
+EXECUTE GrabaMuchasSencillas '27-10-2018 15:34:09', 10000 -- Probando caso correcto
 
 
 

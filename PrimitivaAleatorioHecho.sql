@@ -986,46 +986,13 @@ AS
 		END
 	GO
 
+	-- Ahora tenemos que crear un procedimiento que nos meta en premios de cada apuesta lo que ha ganado. Después sumar
+	-- en el premio del boleto, todos los premios de sus apuestas al reintegro metido anteriormente.
 
-	--Esto de momento es inutil
-
-	CREATE PROCEDURE asignarReintegro (@FechaSorteo DATETIME)
+	CREATE PROCEDURE asignarPremioApuesta (@fechaSorteo DATETIME)
 	AS
 	BEGIN
-		DECLARE @numeroApuestas INT = 0
-		DECLARE @idApuesta INT
-		DECLARE cursorApuestas CURSOR
-		FOR
-		SELECT IDApuesta
-		FROM dbo.Ganadores (@FechaSorteo) 
-		WHERE reintegro = 1
-
-		OPEN cursorApuestas
-		FETCH NEXT FROM cursorApuestas INTO @idApuesta
-
-		WHILE @@FETCH_STATUS = 0
-		BEGIN
-
-		IF EXISTS (SELECT ID
-					FROM Apuestas
-					WHERE Tipo = 0 AND ID = @idApuesta)
-		BEGIN
-		SELECT @numeroApuestas = COUNT (A.ID)
-			FROM Apuestas AS A
-			INNER JOIN
-			Boletos AS B
-			ON B.ID = A.ID_Boleto
-			WHERE A.ID = @idApuesta
-
-			UPDATE Apuestas
-			SET Premio = @numeroApuestas
-			WHERE ID = @idApuesta
-		END
-
-			FETCH NEXT FROM cursorApuestas INTO @idApuesta
-		END
-		
-
+		SELECT * FROM dbo.Ganadores (@fechaSorteo)
 	END
 
 	GO

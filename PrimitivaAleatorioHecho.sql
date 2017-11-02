@@ -25,7 +25,7 @@ CREATE TABLE Boletos
 	ID BIGINT NOT NULL,
 	FechaSorteo DATETIME NOT NULL,
 	Reintegro TINYINT NULL,
-	Premio MONEY NULL,
+	Premio MONEY DEFAULT 0 NOT NULL,
 
 
 	CONSTRAINT PK_Boletos PRIMARY KEY (ID),
@@ -826,11 +826,13 @@ AS
 									END
 							END
 
+					INSERT INTO @tabla (IDApuesta, numerosAcertados, complementario)
+					 VALUES (@IDApuesta, @numerosAcertados, @complementario)
 						
 					END
 				 END
 
-				
+								
 				FETCH NEXT FROM cursorApuestas INTO @IDApuesta
 			END
 
@@ -981,7 +983,7 @@ AS
 
 			FETCH NEXT FROM cursorBoletos INTO @idBoleto
 			END
-
+		END
 	GO
 
 

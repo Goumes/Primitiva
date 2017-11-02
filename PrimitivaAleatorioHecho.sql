@@ -24,7 +24,7 @@ CREATE TABLE Boletos
 (
 	ID BIGINT NOT NULL,
 	FechaSorteo DATETIME NOT NULL,
-	Reintegro TINYINT NULL,
+	Reintegro BIT NULL,
 	Premio MONEY DEFAULT 0 NOT NULL,
 
 
@@ -758,7 +758,7 @@ Salida: Los ganadores en cada categoría
 Postcondiciones: Devuelve los ganadores que hay por categoría
 */
 CREATE FUNCTION Ganadores (@fechaSorteo DATETIME)
-RETURNS @tabla TABLE  (IDApuesta INT, numerosAcertados INT, complementario BIT)
+RETURNS @tabla TABLE  (IDApuesta INT, numerosAcertados INT, complementario BIT, reintegro BIT)
 AS
 	BEGIN
 		DECLARE @resultado INT = 0
@@ -769,8 +769,8 @@ AS
 
 			DECLARE @IDApuesta BIGINT
 			DECLARE @numeroNoAcertado TINYINT
-			DECLARE @complementario BIT
-			SET @complementario = 0
+			DECLARE @complementario BIT = 0
+			DECLARE @reintegro BIT = 0
 
 			DECLARE cursorApuestas CURSOR
 			FOR
@@ -789,6 +789,7 @@ AS
 
 			SET @complementario = 0
 			SET @numerosAcertados = 0
+			SET @reintegro = 0
 
 			IF EXISTS (
 				SELECT Valor
@@ -826,8 +827,18 @@ AS
 									END
 							END
 
-					INSERT INTO @tabla (IDApuesta, numerosAcertados, complementario)
-					 VALUES (@IDApuesta, @numerosAcertados, @complementario)
+						IF (@numerosAcertados = 6)
+						BEGIN
+							SELECT @reintegro = B.Reintegro
+								FROM Boletos AS B
+								INNER JOIN
+								Apuestas AS A
+								ON B.ID = A.ID_Boleto
+								WHERE A.ID = @IDApuesta
+						END
+
+					INSERT INTO @tabla (IDApuesta, numerosAcertados, complementario, reintegro)
+					 VALUES (@IDApuesta, @numerosAcertados, @complementario, @reintegro)
 						
 					END
 				 END
@@ -859,13 +870,24 @@ AS
 			FROM dbo.Ganadores (@FechaSorteo)
 			WHERE numerosAcertados = 6) > 0)
 	BEGIN
-	
+		IF ((SELECT Reintegro
+			FROM dbo.Ganadores (@FechaSorteo)) = 0)
+		BEGIN
+			INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
 
-		INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
+			(SELECT '1', (SELECT Categoria1 FROM Premios)/(COUNT (IDApuesta)), COUNT (IDApuesta)
+				FROM dbo.Ganadores (@FechaSorteo)
+					WHERE numerosAcertados = 6)
+		END
+		ELSE
+		BEGIN
 
-		(SELECT '1', (SELECT Categoria1 FROM Premios)/(COUNT (IDApuesta)), COUNT (IDApuesta)
-			FROM dbo.Ganadores (@FechaSorteo)
-				WHERE numerosAcertados = 6)
+			INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
+
+			(SELECT 'E', (SELECT CategoriaE FROM Premios)/(COUNT (IDApuesta)), COUNT (IDApuesta)
+				FROM dbo.Ganadores (@FechaSorteo)
+					WHERE numerosAcertados = 6 AND reintegro = 1)
+		END
 
 	END
 
@@ -926,6 +948,7 @@ AS
 
 	END
 
+
 		-- Falta la categoria Especial
 
 
@@ -964,6 +987,10 @@ AS
 											FROM Sorteos
 											WHERE Fecha = @fechaSorteo) AND ID = @idBoleto))
 			BEGIN
+				UPDATE Boletos
+				SET Reintegro = 1
+				WHERE ID = @idBoleto
+
 				SET @reintegro = 1
 
 				SELECT @numeroApuestas = COUNT (A.ID)
@@ -992,7 +1019,106 @@ AS
 	CREATE PROCEDURE asignarPremioApuesta (@fechaSorteo DATETIME)
 	AS
 	BEGIN
-		SELECT * FROM dbo.Ganadores (@fechaSorteo)
+		DECLARE @numeroAcertados INT
+		DECLARE @complementario BIT
+		DECLARE @idApuesta INT
+		DECLARE @Premio1 MONEY
+		DECLARE @Premio2 MONEY
+		DECLARE @Premio3 MONEY
+		DECLARE @Premio4 MONEY
+		DECLARE @Premio5 MONEY
+		DECLARE @PremioE MONEY
+
+		SELECT @Premio1 = Dinero
+		FROM dbo.cantidadPremios (@fechaSorteo)
+		WHERE Categoria = 1
+
+		SELECT @Premio2 = Dinero
+		FROM dbo.cantidadPremios (@fechaSorteo)
+		WHERE Categoria = 2
+
+		SELECT @Premio3 = Dinero
+		FROM dbo.cantidadPremios (@fechaSorteo)
+		WHERE Categoria = 3
+
+		SELECT @Premio4 = Dinero
+		FROM dbo.cantidadPremios (@fechaSorteo)
+		WHERE Categoria = 4
+
+		SELECT @Premio5 = Dinero
+		FROM dbo.cantidadPremios (@fechaSorteo)
+		WHERE Categoria = 5
+
+		DECLARE cursorApuestas CURSOR
+		FOR
+		SELECT IDApuesta
+		FROM dbo.Ganadores (@fechaSorteo)
+
+		OPEN cursorApuestas
+		FETCH NEXT FROM cursorApuestas INTO @idApuesta
+
+		WHILE @@FETCH_STATUS = 0
+		BEGIN
+		
+			SELECT @numeroAcertados = numerosAcertados, @complementario = complementario
+			FROM dbo.Ganadores (@fechaSorteo)
+			WHERE IDApuesta = @idApuesta
+
+			IF (@numeroAcertados = 3)
+			BEGIN
+				UPDATE Apuestas
+				SET Premio = @Premio5
+				WHERE ID = @idApuesta
+			END
+
+			ELSE IF (@numeroAcertados = 4)
+			BEGIN
+				UPDATE Apuestas
+				SET Premio = @Premio4
+				WHERE ID = @idApuesta
+			END
+
+			ELSE IF (@numeroAcertados = 5 AND @complementario = 0)
+			BEGIN
+				UPDATE Apuestas
+				SET Premio = @Premio3
+				WHERE ID = @idApuesta
+			END
+
+			ELSE IF (@numeroAcertados = 5 AND @complementario = 1)
+			BEGIN
+				UPDATE Apuestas
+				SET Premio = @Premio2
+				WHERE ID = @idApuesta
+			END
+
+			ELSE IF (@numeroAcertados = 6)
+			BEGIN
+				IF ((SELECT B.Reintegro
+							FROM Boletos AS B
+							INNER JOIN
+							Apuestas AS A
+							ON B.ID = A.ID_Boleto) = 0)
+				BEGIN
+					UPDATE Apuestas
+					SET Premio = @Premio1
+					WHERE ID = @idApuesta
+				END
+
+				ELSE
+				BEGIN
+					UPDATE Apuestas
+					SET Premio = @PremioE
+					WHERE ID = @idApuesta
+				END
+				
+			END
+
+			-- Falta categoria especial
+
+
+			FETCH NEXT FROM cursorApuestas INTO @idApuesta
+		END
 	END
 
 	GO
@@ -1072,18 +1198,19 @@ VALUES
 ('17-10-2017 15:34:09', 4, 5)
 
 INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
-VALUES (4, '17-10-2017 15:34:09', 4)
+VALUES (100000, '27-10-2018 15:34:09', 4)
 
 INSERT INTO Apuestas (ID, ID_Boleto, Tipo)
-VALUES (4, 4, 1)
+VALUES (100000, 100000, 1)
 
 INSERT INTO Numeros (IDApuesta, Valor)
 VALUES
-(4, 1),
-(4, 2),
-(4, 3),
-(4, 4),
-(4, 5)
+(100000, 3),
+(100000, 5),
+(100000, 8),
+(100000, 10),
+(100000, 39),
+(100000, 48)
 
 UPDATE Apuestas
 SET Estado = 1
@@ -1123,6 +1250,12 @@ FROM dbo.cantidadPremios ('27-10-2018 15:34:09')
 SELECT *
 FROM dbo.Ganadores ('27-10-2018 15:34:09')
 ORDER BY numerosAcertados
+
+EXECUTE asignarPremioApuesta '27-10-2018 15:34:09'
+
+SELECT *
+FROM Apuestas
+ORDER BY Premio
 
 
  -- FIN PRUEBAS

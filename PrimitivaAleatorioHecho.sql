@@ -106,7 +106,7 @@ CREATE TABLE Aciertos
 	Reintegro BIT NOT NULL DEFAULT 0,
 	Complementario BIT NOT NULL DEFAULT 0,
 
-	CONSTRAINT PK_Aciertos PRIMARY KEY (Pronostico, NumerosAcertados)--,
+	CONSTRAINT PK_Aciertos PRIMARY KEY (Pronostico, NumerosAcertados, Reintegro, Complementario)--,
 	--CONSTRAINT FK_Aciertos_Sorteos FOREIGN KEY (FechaSorteo) REFERENCES Sorteos (Fecha) ON UPDATE CASCADE ON DELETE NO ACTION
 ) 
 
@@ -138,7 +138,7 @@ END
 
 GO
 
-INSERT INTO Aciertos (Pronostico, NumerosAcertados, Categoria1,Categoria2,Categoria3, Categoria4, Categoria5, CategoriaE, Reintegro, Complementario)
+INSERT INTO Aciertos (Pronostico, NumerosAcertados, Categoria1,Categoria2,Categoria3, Categoria4, Categoria5, CategoriaE)
 VALUES
 (5, '2', NULL, NULL, NULL, NULL, 4, NULL),
 
@@ -156,7 +156,7 @@ VALUES
 (10, '4', NULL, NULL, NULL, 15, 80, NULL),
 (11, '4', NULL, NULL, NULL, 21, 140, NULL),
 
-(5, '4', NULL, 2, NULL, 42, NULL, NULL, 0, 1), --C
+
 
 (5, '5', 1, 1, 42, NULL, NULL, NULL),
 (7, '5', NULL, NULL, 2, 5, NULL, NULL),
@@ -165,20 +165,27 @@ VALUES
 (10, '5', NULL, NULL, 5, 50, 100, NULL),
 (11, '5', NULL, NULL, 6, 75, 200, NULL),
 
-(5, '5', 1, 1, 42, NULL, NULL, 1, 1, 0), --R
 
+
+(7, '6', 1, NULL, 6, NULL, NULL, NULL),
+(8, '6', 1, NULL, 12, 15, NULL, NULL),
+(9, '6', 1, NULL, 18, 45, 20, NULL),
+(10, '6', 1, NULL, 24, 90, 80, NULL),
+(11, '6', 1, NULL, 30, 150, 200, NULL)
+
+
+INSERT INTO Aciertos (Pronostico, NumerosAcertados, Categoria1,Categoria2,Categoria3, Categoria4, Categoria5, CategoriaE, Reintegro, Complementario)
+VALUES
+
+(5, '4', NULL, 2, NULL, 42, NULL, NULL, 0, 1), --C
+
+(5, '5', 1, 1, 42, NULL, NULL, 1, 1, 0), --R
 
 (7, '5', NULL, 1, 1, 5, NULL, NULL, 0, 1), --C
 (8, '5', NULL, 1, 2, 15, 10, NULL, 0, 1), --C
 (9, '5', NULL, 1, 3, 30, 40, NULL, 0, 1), --C
 (10, '5', NULL, 1, 4, 50, 100, NULL, 0, 1), --C
 (11, '5', NULL, 1, 5, 75, 200, NULL, 0 ,1), --C
-
-(7, '6', 1, NULL, 6, NULL, NULL, NULL),
-(8, '6', 1, NULL, 12, 15, NULL, NULL),
-(9, '6', 1, NULL, 18, 45, 20, NULL),
-(10, '6', 1, NULL, 24, 90, 80, NULL),
-(11, '6', 1, NULL, 30, 150, 200, NULL),
 
 (7, '6', 1, 6, NULL, NULL, NULL, NULL, 0, 1), -- C
 (8, '6', 1, 6, 6, 15, NULL, NULL, 0, 1), -- C
@@ -197,7 +204,6 @@ VALUES
 (9, '6', 1, 6, 12, 45, 20, 1, 1, 1), -- RC
 (10, '6', 1, 6, 18, 90, 80, 1, 1, 1), -- RC
 (11, '6', 1, 6, 24, 150, 200, 1, 1, 1) -- RC
-
 GO
 
 /*
@@ -864,6 +870,31 @@ CREATE FUNCTION cantidadPremios (@FechaSorteo DATETIME)
 RETURNS @Tabla TABLE (Categoria CHAR, Dinero MONEY, Acertantes INT) 
 AS
 	BEGIN
+	DECLARE @multipleCat5 INT
+	DECLARE @multipleCat4 INT
+	DECLARE @multipleCat3 INT
+	DECLARE @multipleCat2 INT
+	DECLARE @multipleCat1 INT
+	DECLARE @multipleCatE INT
+	SET @multipleCat5= (SELECT SUM(Categoria5) FROM dbo.ganadoresMultiples(@FechaSorteo)
+						GROUP BY Categoria5
+						ORDER BY Categoria5)
+	SET @multipleCat4= (SELECT SUM(Categoria4) FROM dbo.ganadoresMultiples(@FechaSorteo)
+						GROUP BY Categoria4
+						ORDER BY Categoria4)
+	SET @multipleCat3= (SELECT SUM(Categoria3) FROM dbo.ganadoresMultiples(@FechaSorteo)
+						GROUP BY Categoria3
+						ORDER BY Categoria3)
+	SET @multipleCat2= (SELECT SUM(Categoria2) FROM dbo.ganadoresMultiples(@FechaSorteo)
+						GROUP BY Categoria2
+						ORDER BY Categoria2)
+	SET @multipleCat1= (SELECT SUM(Categoria1) FROM dbo.ganadoresMultiples(@FechaSorteo)
+						GROUP BY Categoria1
+						ORDER BY Categoria1)
+	SET @multipleCatE= (SELECT SUM(CategoriaE) FROM dbo.ganadoresMultiples(@FechaSorteo)
+						GROUP BY CategoriaE
+						ORDER BY CategoriaE)
+
 
 	/*
 		DECLARE @Tabla TABLE (IDApuesta BIGINT, numeroAciertos INT)
@@ -872,16 +903,24 @@ AS
 		(SELECT IDApuesta, numerosAcertados FROM dbo.Ganadores (@FechaSorteo))
 	*/
 
-	IF  ((SELECT COUNT (IDApuesta)
+	IF  ((((SELECT COUNT (IDApuesta)
 			FROM dbo.Ganadores (@FechaSorteo)
 			WHERE numerosAcertados = 6) > 0)
+			OR
+			((SELECT Categoria1 FROM dbo.ganadoresMultiples(@FechaSorteo)) IS NOT NULL))
+			OR
+			((SELECT CategoriaE FROM dbo.ganadoresMultiples(@FechaSorteo)) IS NOT NULL))
 	BEGIN
-		IF ((SELECT Reintegro
+		IF ((((SELECT Reintegro
 			FROM dbo.Ganadores (@FechaSorteo)) = 0)
+			OR
+			(SELECT Categoria1 FROM dbo.ganadoresMultiples(@FechaSorteo)) IS NOT NULL)
+			)
+
 		BEGIN
 			INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
 
-			(SELECT '1', (SELECT Categoria1 FROM Premios)/(COUNT (IDApuesta)), COUNT (IDApuesta)
+			(SELECT '1', (SELECT Categoria1 FROM Premios)/((COUNT (IDApuesta))+@multipleCat1), (COUNT (IDApuesta)+@multipleCat1)
 				FROM dbo.Ganadores (@FechaSorteo)
 					WHERE numerosAcertados = 6)
 		END
@@ -890,51 +929,58 @@ AS
 
 			INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
 
-			(SELECT 'E', (SELECT CategoriaE FROM Premios)/(COUNT (IDApuesta)), COUNT (IDApuesta)
+			(SELECT 'E', (SELECT CategoriaE FROM Premios)/((COUNT (IDApuesta))+@multipleCatE), (COUNT (IDApuesta)+@multipleCatE)
 				FROM dbo.Ganadores (@FechaSorteo)
 					WHERE numerosAcertados = 6 AND reintegro = 1)
 		END
 
 	END
 
-	IF ((SELECT COUNT (IDApuesta)
+	IF ((((SELECT COUNT (IDApuesta)
 			FROM dbo.Ganadores (@FechaSorteo)
 			WHERE numerosAcertados = 5 AND complementario = 1) > 0)
+			OR
+			(SELECT Categoria2 FROM dbo.ganadoresMultiples(@FechaSorteo)) IS NOT NULL))
 	BEGIN
 	
 
 	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
 
-	(SELECT '2', (SELECT Categoria2 FROM Premios)/(COUNT (IDApuesta)), COUNT (IDApuesta)
+	(SELECT '2', (SELECT Categoria2 FROM Premios)/((COUNT (IDApuesta))+@multipleCat2), (COUNT (IDApuesta)+@multipleCat2)
 		FROM dbo.Ganadores (@FechaSorteo)
 		 WHERE numerosAcertados = 5 AND complementario = 1)-- + C AMO A VE SI ESTO VA ASI DE LOCURA
 
 	END
 
 
-	IF ((SELECT COUNT (IDApuesta)
+	IF ((((SELECT COUNT (IDApuesta)
 			FROM dbo.Ganadores (@FechaSorteo)
 			WHERE numerosAcertados = 5 AND complementario = 0) > 0)
+			OR
+			(SELECT Categoria3 FROM dbo.ganadoresMultiples(@FechaSorteo)) IS NOT NULL))
+			
 	BEGIN
 	
 
 	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
 
-	(SELECT '3', (SELECT Categoria3 FROM Premios)/(COUNT (IDApuesta)), COUNT (IDApuesta)
+	(SELECT '3', (SELECT Categoria3 FROM Premios)/((COUNT (IDApuesta))+@multipleCat3), ((COUNT (IDApuesta))+@multipleCat3)
 		FROM dbo.Ganadores (@FechaSorteo)
 		 WHERE numerosAcertados = 5)
 
 
 	END
 
-	IF ((SELECT COUNT (IDApuesta)
+	IF ((((SELECT COUNT (IDApuesta)
 			FROM dbo.Ganadores (@FechaSorteo)
 			WHERE numerosAcertados = 4) > 0)
+			OR
+			(SELECT Categoria4 FROM dbo.ganadoresMultiples(@FechaSorteo)) IS NOT NULL))
 	BEGIN
 	
 	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
 
-	(SELECT '4', (SELECT Categoria4 FROM Premios)/(COUNT (IDApuesta)), COUNT (IDApuesta)
+	(SELECT '4', (SELECT Categoria4 FROM Premios)/((COUNT (IDApuesta))+@multipleCat4), ((COUNT (IDApuesta)) + @multipleCat4)
 		FROM dbo.Ganadores (@FechaSorteo)
 		 WHERE numerosAcertados = 4)
 
@@ -948,18 +994,15 @@ AS
 
 	INSERT INTO @Tabla (Categoria, Dinero, Acertantes)
 
-	(SELECT '5', '8', COUNT (IDApuesta)
+	(SELECT '5', '8', (COUNT (IDApuesta)+@multipleCat5)
 		FROM dbo.Ganadores (@FechaSorteo)
 		 WHERE numerosAcertados = 3)
 
 	END
-
-	IF ((SELECT COUNT (IDApuesta)
-		FROM dbo.ganadoresMultiples (@FechaSorteo)
-		Categoria1) > 0)
-
-		-- Terminar de asignar los premios dependiendo de la categoria para las apuestas multiples. El resto se hace automáticamente.
-
+	
+-- Terminar de asignar los premios dependiendo de la categoria para las apuestas multiples. El resto se hace automáticamente.
+-- OK, aqui va
+	UPDATE @Tabla SET Acertantes= Acertantes+ @multipleCat1 WHERE Categoria=1
 
 		RETURN
 		

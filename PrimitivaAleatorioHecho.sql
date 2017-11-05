@@ -761,6 +761,7 @@ CREATE FUNCTION Ganadores (@fechaSorteo DATETIME)
 RETURNS @tabla TABLE  (IDApuesta INT, numerosAcertados INT, complementario BIT, reintegro BIT)
 AS
 	BEGIN
+	
 		DECLARE @resultado INT = 0
 		DECLARE @numerosAcertados INT = 0
 
@@ -797,6 +798,7 @@ AS
 				WHERE IDApuesta = @IDApuesta AND Valor IN (SELECT Valor
 															FROM NumerosSorteo
 															WHERE FechaSorteo = @fechaSorteo))
+
 				BEGIN
 
 					IF ((SELECT COUNT (Valor)
@@ -805,7 +807,8 @@ AS
 																	FROM NumerosSorteo
 																	WHERE FechaSorteo = @fechaSorteo)) > 2)
 					BEGIN
-
+					IF(SELECT * FROM Apuestas
+						WHERE @IDApuesta = ID)
 						SELECT @numerosAcertados = COUNT (Valor)
 						FROM Numeros
 						WHERE IDApuesta = @IDApuesta AND Valor IN  (SELECT Valor
@@ -947,9 +950,6 @@ AS
 		 WHERE numerosAcertados = 3)
 
 	END
-
-
-		-- Falta la categoria Especial
 
 
 		RETURN
@@ -1114,12 +1114,21 @@ AS
 				
 			END
 
-			-- Falta categoria especial
-
+			
 
 			FETCH NEXT FROM cursorApuestas INTO @idApuesta
 		END
 	END
+
+	--METER EN GANADORES LA CANTIDAD DE APUESTAS SIMPLES QUE HAY EN MULTIPLES Y REPARTIR LOS PREMIOS DE LAS MULTIPLES Y YA TERMINAMOS TO LA MIERDA xd
+
+	GO
+
+CREATE PROCEDURE contarMultiples (@fechaSorteo DATETIME)
+AS
+BEGIN
+	SELECT COUNT
+END
 
 	GO
 -- COMIENZO PRUEBAS

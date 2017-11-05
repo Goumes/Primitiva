@@ -103,6 +103,8 @@ CREATE TABLE Aciertos
 	Categoria4 TINYINT NULL,
 	Categoria5 TINYINT NULL,
 	CategoriaE TINYINT NULL,
+	Reintegro BIT NOT NULL DEFAULT 0,
+	Complementario BIT NOT NULL DEFAULT 0,
 
 	CONSTRAINT PK_Aciertos PRIMARY KEY (Pronostico, NumerosAcertados)--,
 	--CONSTRAINT FK_Aciertos_Sorteos FOREIGN KEY (FechaSorteo) REFERENCES Sorteos (Fecha) ON UPDATE CASCADE ON DELETE NO ACTION
@@ -136,7 +138,7 @@ END
 
 GO
 
-INSERT INTO Aciertos (Pronostico, NumerosAcertados, Categoria1,Categoria2,Categoria3, Categoria4, Categoria5, CategoriaE)
+INSERT INTO Aciertos (Pronostico, NumerosAcertados, Categoria1,Categoria2,Categoria3, Categoria4, Categoria5, CategoriaE, Reintegro, Complementario)
 VALUES
 (5, '2', NULL, NULL, NULL, NULL, 4, NULL),
 
@@ -154,7 +156,7 @@ VALUES
 (10, '4', NULL, NULL, NULL, 15, 80, NULL),
 (11, '4', NULL, NULL, NULL, 21, 140, NULL),
 
-(5, '4C', NULL, 2, NULL, 42, NULL, NULL),
+(5, '4', NULL, 2, NULL, 42, NULL, NULL, 0, 1), --C
 
 (5, '5', 1, 1, 42, NULL, NULL, NULL),
 (7, '5', NULL, NULL, 2, 5, NULL, NULL),
@@ -163,14 +165,14 @@ VALUES
 (10, '5', NULL, NULL, 5, 50, 100, NULL),
 (11, '5', NULL, NULL, 6, 75, 200, NULL),
 
-(5, '5R', 1, 1, 42, NULL, NULL, 1),
+(5, '5', 1, 1, 42, NULL, NULL, 1, 1, 0), --R
 
 
-(7, '5C', NULL, 1, 1, 5, NULL, NULL),
-(8, '5C', NULL, 1, 2, 15, 10, NULL),
-(9, '5C', NULL, 1, 3, 30, 40, NULL),
-(10, '5C', NULL, 1, 4, 50, 100, NULL),
-(11, '5C', NULL, 1, 5, 75, 200, NULL),
+(7, '5', NULL, 1, 1, 5, NULL, NULL, 0, 1), --C
+(8, '5', NULL, 1, 2, 15, 10, NULL, 0, 1), --C
+(9, '5', NULL, 1, 3, 30, 40, NULL, 0, 1), --C
+(10, '5', NULL, 1, 4, 50, 100, NULL, 0, 1), --C
+(11, '5', NULL, 1, 5, 75, 200, NULL, 0 ,1), --C
 
 (7, '6', 1, NULL, 6, NULL, NULL, NULL),
 (8, '6', 1, NULL, 12, 15, NULL, NULL),
@@ -178,23 +180,23 @@ VALUES
 (10, '6', 1, NULL, 24, 90, 80, NULL),
 (11, '6', 1, NULL, 30, 150, 200, NULL),
 
-(7, '6C', 1, 6, NULL, NULL, NULL, NULL),
-(8, '6C', 1, 6, 6, 15, NULL, NULL),
-(9, '6C', 1, 6, 12, 45, 20, NULL),
-(10, '6C', 1, 6, 18, 90, 80, NULL),
-(11, '6C', 1, 6, 24, 150, 200, NULL),
+(7, '6', 1, 6, NULL, NULL, NULL, NULL, 0, 1), -- C
+(8, '6', 1, 6, 6, 15, NULL, NULL, 0, 1), -- C
+(9, '6', 1, 6, 12, 45, 20, NULL, 0, 1), -- C
+(10, '6', 1, 6, 18, 90, 80, NULL, 0, 1), -- C
+(11, '6', 1, 6, 24, 150, 200, NULL, 0, 1), -- C
 
-(7, '6R', 1, NULL, 6, NULL, NULL, 1),
-(8, '6R', 1, NULL, 12, 15, NULL, 1),
-(9, '6R', 1, NULL, 18, 45, 20, 1),
-(10, '6R', 1, NULL, 24, 90, 80, 1),
-(11, '6R', 1, NULL, 30, 150, 200, 1),
+(7, '6', 1, NULL, 6, NULL, NULL, 1, 1, 0), -- R
+(8, '6', 1, NULL, 12, 15, NULL, 1, 1, 0), -- R
+(9, '6', 1, NULL, 18, 45, 20, 1, 1, 0), -- R
+(10, '6', 1, NULL, 24, 90, 80, 1, 1, 0), -- R
+(11, '6', 1, NULL, 30, 150, 200, 1, 1, 0), -- R
 
-(7, '6RC', 1, 6, NULL, NULL, NULL, 1),
-(8, '6RC', 1, 6, 6, 15, NULL, 1),
-(9, '6RC', 1, 6, 12, 45, 20, 1),
-(10, '6RC', 1, 6, 18, 90, 80, 1),
-(11, '6RC', 1, 6, 24, 150, 200, 1)
+(7, '6', 1, 6, NULL, NULL, NULL, 1, 1, 1), -- RC
+(8, '6', 1, 6, 6, 15, NULL, 1, 1, 1), -- RC
+(9, '6', 1, 6, 12, 45, 20, 1, 1, 1), -- RC
+(10, '6', 1, 6, 18, 90, 80, 1, 1, 1), -- RC
+(11, '6', 1, 6, 24, 150, 200, 1, 1, 1) -- RC
 
 GO
 
@@ -780,7 +782,7 @@ AS
 			INNER JOIN
 			Boletos AS B
 			ON A.ID_Boleto = B.ID
-			WHERE B.FechaSorteo = @fechaSorteo
+			WHERE B.FechaSorteo = @fechaSorteo AND Tipo = 0
 
 			OPEN cursorApuestas
 			FETCH NEXT FROM cursorApuestas INTO @IDApuesta
@@ -794,7 +796,10 @@ AS
 
 			IF EXISTS (
 				SELECT Valor
-				FROM Numeros
+				FROM Numeros AS N
+				INNER JOIN
+				Apuestas AS A
+				ON N.IDApuesta = A.ID
 				WHERE IDApuesta = @IDApuesta AND Valor IN (SELECT Valor
 															FROM NumerosSorteo
 															WHERE FechaSorteo = @fechaSorteo))
@@ -807,8 +812,6 @@ AS
 																	FROM NumerosSorteo
 																	WHERE FechaSorteo = @fechaSorteo)) > 2)
 					BEGIN
-					IF(SELECT * FROM Apuestas
-						WHERE @IDApuesta = ID)
 						SELECT @numerosAcertados = COUNT (Valor)
 						FROM Numeros
 						WHERE IDApuesta = @IDApuesta AND Valor IN  (SELECT Valor
@@ -950,6 +953,12 @@ AS
 		 WHERE numerosAcertados = 3)
 
 	END
+
+	IF ((SELECT COUNT (IDApuesta)
+		FROM dbo.ganadoresMultiples (@FechaSorteo)
+		Categoria1) > 0)
+
+		-- Terminar de asignar los premios dependiendo de la categoria para las apuestas multiples. El resto se hace automáticamente.
 
 
 		RETURN
@@ -1120,17 +1129,67 @@ AS
 		END
 	END
 
-	--METER EN GANADORES LA CANTIDAD DE APUESTAS SIMPLES QUE HAY EN MULTIPLES Y REPARTIR LOS PREMIOS DE LAS MULTIPLES Y YA TERMINAMOS TO LA MIERDA xd
+	--METER EN GANADORES LA CANTIDAD DE APUESTAS SIMPLES QUE HAY EN MULTIPLES Y REPARTIR LOS PREMIOS DE LAS MULTIPLES Y YA TERMINAMOS TO LA MIERDA xdd
+	GO
+
+	CREATE FUNCTION ganadoresMultiples (@fechaSorteo DATETIME)
+	RETURNS @tablaCategorias TABLE (IDApuesta INT, Categoria1 INT, Categoria2 INT, Categoria3 INT, Categoria4 INT, Categoria5 INT, CategoriaE INT) 
+	AS
+	BEGIN
+		DECLARE @IDApuesta BIGINT
+		DECLARE @numeroAcertados TINYINT
+		DECLARE @complementario BIT = 0
+		DECLARE @reintegro BIT = 0
+		DECLARE @pronostico INT
+		DECLARE cursorApuestas CURSOR
+		FOR
+		SELECT A.ID
+		FROM Apuestas AS A
+		INNER JOIN
+		Boletos AS B
+		ON A.ID_Boleto = B.ID
+		WHERE B.FechaSorteo = @fechaSorteo AND Tipo = 1
+
+		OPEN cursorApuestas
+		FETCH NEXT FROM cursorApuestas INTO @IDApuesta
+
+		WHILE @@FETCH_STATUS = 0
+		BEGIN
+
+			SELECT @Pronostico = COUNT (Valor)
+				FROM Numeros AS N
+				INNER JOIN
+				Apuestas AS A
+				ON N.IDApuesta = A.ID
+				WHERE IDApuesta = @IDApuesta
+
+			SELECT @numeroAcertados = COUNT (Valor)
+						FROM Numeros
+						WHERE IDApuesta = @IDApuesta AND Valor IN  (SELECT Valor
+																	FROM NumerosSorteo
+																	WHERE FechaSorteo = @fechaSorteo)
+			INSERT INTO @tablaCategorias (IDApuesta, Categoria1, Categoria2, Categoria3, Categoria4, Categoria5, CategoriaE)
+			SELECT @IDApuesta, Categoria1, Categoria2, Categoria3, Categoria4, Categoria5, CategoriaE
+			FROM Aciertos
+			WHERE Pronostico = @pronostico AND NumerosAcertados = @numeroAcertados
+
+
+			FETCH NEXT FROM cursorApuestas INTO @IDApuesta
+
+			--HAY QUE CERRAR LOS CURSORES
+		END
+
+		RETURN
+
+	END
 
 	GO
 
-CREATE PROCEDURE contarMultiples (@fechaSorteo DATETIME)
-AS
-BEGIN
-	SELECT COUNT
-END
+
 
 	GO
+
+
 -- COMIENZO PRUEBAS
 BEGIN TRANSACTION
 

@@ -877,23 +877,17 @@ AS
 	DECLARE @multipleCat1 INT
 	DECLARE @multipleCatE INT
 	SET @multipleCat5= (SELECT SUM(Categoria5) FROM dbo.ganadoresMultiples(@FechaSorteo)
-						GROUP BY Categoria5
-						ORDER BY Categoria5)
+						GROUP BY Categoria5)
 	SET @multipleCat4= (SELECT SUM(Categoria4) FROM dbo.ganadoresMultiples(@FechaSorteo)
-						GROUP BY Categoria4
-						ORDER BY Categoria4)
+						GROUP BY Categoria4)
 	SET @multipleCat3= (SELECT SUM(Categoria3) FROM dbo.ganadoresMultiples(@FechaSorteo)
-						GROUP BY Categoria3
-						ORDER BY Categoria3)
+						GROUP BY Categoria3)
 	SET @multipleCat2= (SELECT SUM(Categoria2) FROM dbo.ganadoresMultiples(@FechaSorteo)
-						GROUP BY Categoria2
-						ORDER BY Categoria2)
+						GROUP BY Categoria2)
 	SET @multipleCat1= (SELECT SUM(Categoria1) FROM dbo.ganadoresMultiples(@FechaSorteo)
-						GROUP BY Categoria1
-						ORDER BY Categoria1)
+						GROUP BY Categoria1)
 	SET @multipleCatE= (SELECT SUM(CategoriaE) FROM dbo.ganadoresMultiples(@FechaSorteo)
-						GROUP BY CategoriaE
-						ORDER BY CategoriaE)
+						GROUP BY CategoriaE)
 
 
 	/*
@@ -909,7 +903,7 @@ AS
 			OR
 			((SELECT Categoria1 FROM dbo.ganadoresMultiples(@FechaSorteo)) IS NOT NULL))
 			OR
-			((SELECT CategoriaE FROM dbo.ganadoresMultiples(@FechaSorteo)) IS NOT NULL))
+			((SELECT CategoriaE FROM dbo.ganadoresMultiples(@FechaSorteo)) IS NOT NULL)) -- ANY
 	BEGIN
 		IF ((((SELECT Reintegro
 			FROM dbo.Ganadores (@FechaSorteo)) = 0)

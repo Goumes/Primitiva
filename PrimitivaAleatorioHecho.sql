@@ -1222,6 +1222,9 @@ AS
 			--HAY QUE CERRAR LOS CURSORES
 		END
 
+		CLOSE cursorApuestas
+		DEALLOCATE cursorApuestas
+
 		RETURN
 
 	END

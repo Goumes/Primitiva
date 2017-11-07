@@ -876,18 +876,12 @@ AS
 	DECLARE @multipleCat2 INT
 	DECLARE @multipleCat1 INT
 	DECLARE @multipleCatE INT
-	SET @multipleCat5= (SELECT SUM(Categoria5) FROM dbo.ganadoresMultiples(@FechaSorteo)
-						GROUP BY Categoria5)
-	SET @multipleCat4= (SELECT SUM(Categoria4) FROM dbo.ganadoresMultiples(@FechaSorteo)
-						GROUP BY Categoria4)
-	SET @multipleCat3= (SELECT SUM(Categoria3) FROM dbo.ganadoresMultiples(@FechaSorteo)
-						GROUP BY Categoria3)
-	SET @multipleCat2= (SELECT SUM(Categoria2) FROM dbo.ganadoresMultiples(@FechaSorteo)
-						GROUP BY Categoria2)
-	SET @multipleCat1= (SELECT SUM(Categoria1) FROM dbo.ganadoresMultiples(@FechaSorteo)
-						GROUP BY Categoria1)
-	SET @multipleCatE= (SELECT SUM(CategoriaE) FROM dbo.ganadoresMultiples(@FechaSorteo)
-						GROUP BY CategoriaE)
+	SET @multipleCat5= (SELECT SUM(Categoria5) FROM dbo.ganadoresMultiples(@FechaSorteo))
+	SET @multipleCat4= (SELECT SUM(Categoria4) FROM dbo.ganadoresMultiples(@FechaSorteo))
+	SET @multipleCat3= (SELECT SUM(Categoria3) FROM dbo.ganadoresMultiples(@FechaSorteo))
+	SET @multipleCat2= (SELECT SUM(Categoria2) FROM dbo.ganadoresMultiples(@FechaSorteo))
+	SET @multipleCat1= (SELECT SUM(Categoria1) FROM dbo.ganadoresMultiples(@FechaSorteo))
+	SET @multipleCatE= (SELECT SUM(CategoriaE) FROM dbo.ganadoresMultiples(@FechaSorteo))
 
 
 	/*
@@ -1249,6 +1243,9 @@ EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 0 --Probando caso incorrect
 
 BEGIN TRANSACTION
 
+--||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+--|||||||||||||||||||||||||||||||||||||PRUEBAS EN ORDEN|||||||||||||||||||||||||||||||||||||||||||||
+--||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
@@ -1271,39 +1268,32 @@ VALUES
 (1, 5),
 (1, 6)
 
-INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
-VALUES (1, '27-10-2018 15:34:09', 4)
-
-INSERT INTO Apuestas (ID, ID_Boleto, Tipo) -- CREO QUE NO SALE EL DINERO PORQUE LAS APUESTAS ESTAN EN ESTADO 0
-VALUES (1, 1, 0)
-
-INSERT INTO Numeros (IDApuesta, Valor)
-VALUES
-(1, 7),
-(1, 10),
-(1, 22),
-(1, 23),
-(1, 38),
-(1, 12)
-
-UPDATE Apuestas
-SET Estado = 1
-WHERE ID = 1
-
 GO
-EXECUTE GrabaMuchasSencillas '27-10-2018 15:34:09', 10000 -- Probando caso correcto
+EXECUTE GrabaMuchasSencillas '27-10-2018 15:34:09', 10000 
 
+EXECUTE GrabaMultiple '27-10-2018 15:34:09',11,15,21,4,5,41,9
 
+EXECUTE PremioPorCategoria '27-10-2018 15:34:09'
+
+EXECUTE RecoleccionApuestasMultiples '27-10-2018 15:34:09'
+
+SELECT *
+FROM dbo.cantidadPremios ('27-10-2018 15:34:09')
+
+SELECT *
+FROM dbo.Ganadores ('27-10-2018 15:34:09')
+ORDER BY numerosAcertados
+
+EXECUTE asignarPremioApuesta '27-10-2018 15:34:09'
+
+--||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+--|||||||||||||||||||||||||||||||||||||FIN PRUEBAS EN ORDEN|||||||||||||||||||||||||||||||||||||||||
+--||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 /* PRUEBAS RECOLECCION DE RECAUDACION MANILLA*/
 
-EXECUTE RecoleccionApuestasMultiples '19-10-2017 15:34:09'
 
-EXECUTE GrabaMultiple '19-10-2017 15:34:09',1,2,3,4,5,6,7,8,9,10,11
-
-INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
-VALUES
-('17-10-2017 15:34:09', 4, 5)
+SELECT * FROM dbo.ganadoresMultiples ('27-10-2018 15:34:09') -- GANADORES MULPTIPLES FUNCIONA
 
 INSERT INTO Boletos (ID, FechaSorteo, Reintegro)
 VALUES (100000, '27-10-2018 15:34:09', 4)
@@ -1325,7 +1315,6 @@ SET Estado = 1
 
 /*FIN PRUEBAS RECOLECCION */
 
-EXECUTE PremioPorCategoria '26-10-2017 15:34:09'
 
 
 SELECT * 
@@ -1351,15 +1340,8 @@ ROLLBACK
 
 COMMIT TRANSACTION
 
-EXECUTE PremioPorCategoria '27-10-2018 15:34:09'
-SELECT *
-FROM dbo.cantidadPremios ('27-10-2018 15:34:09')
 
-SELECT *
-FROM dbo.Ganadores ('27-10-2018 15:34:09')
-ORDER BY numerosAcertados
 
-EXECUTE asignarPremioApuesta '27-10-2018 15:34:09'
 
 SELECT *
 FROM Apuestas

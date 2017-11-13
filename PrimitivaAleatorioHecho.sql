@@ -369,7 +369,8 @@ Postcondiciones: Los numeros y el complementario quedan grabados en la base de d
 */
 CREATE PROCEDURE GeneraNumerosSorteo (@fechaSorteo DATETIME) 
 AS
-	BEGIN			
+	BEGIN
+		DELETE FROM NumerosSorteo WHERE FechaSorteo=@fechaSorteo		
 		DECLARE @tablaNumeros TABLE(
 		Numero TINYINT
 		)
@@ -1243,9 +1244,9 @@ EXECUTE GrabaSencillaAleatoria '5-10-2017 15:34:09', 0 --Probando caso incorrect
 
 BEGIN TRANSACTION
 
---||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
---|||||||||||||||||||||||||||||||||||||PRUEBAS EN ORDEN|||||||||||||||||||||||||||||||||||||||||||||
---||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+--||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||--
+--|||||||||||||||||||||||||||||||||||||PRUEBAS EN ORDEN|||||||||||||||||||||||||||||||||||||||||||||--
+--||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||--
 
 INSERT INTO Sorteos(Fecha,Reintegro,Complementario)
 VALUES
@@ -1286,9 +1287,9 @@ ORDER BY numerosAcertados
 
 EXECUTE asignarPremioApuesta '27-10-2018 15:34:09'
 
---||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
---|||||||||||||||||||||||||||||||||||||FIN PRUEBAS EN ORDEN|||||||||||||||||||||||||||||||||||||||||
---||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+--||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||--
+--|||||||||||||||||||||||||||||||||||||FIN PRUEBAS EN ORDEN|||||||||||||||||||||||||||||||||||||||||--
+--||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||--
 
 /* PRUEBAS RECOLECCION DE RECAUDACION MANILLA*/
 
@@ -1371,7 +1372,7 @@ DELETE FROM Sorteos
 select * from Sorteos
 select * from boletos
 select * from Apuestas
-select * from Numeros
+select * from Numeros where IDApuesta = 57
 
 COMMIT TRANSACTION
 
